@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>알림장</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto,
+                   'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo',
+                   'Noto Sans KR', 'Malgun Gothic', sans-serif;
+      background-color: #000000;
+      padding: 0;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="capture-board"
+       class="w-[800px] bg-[#111111] text-[#E0E0E0] p-6 rounded-xl relative overflow-hidden box-border mx-auto">
+
+    <!-- 헤더 -->
+    <header class="mb-4 pb-4 border-b-2 border-[#222222]">
+      <p class="text-[#888888] text-sm font-medium mb-1 tracking-tight">
+        오늘 {{ today_str }}
+      </p>
+      <h1 class="text-3xl font-bold tracking-tight text-white">
+        {{ next_day_str }} 안내사항
+      </h1>
+    </header>
+
+    <!-- 2단 그리드 -->
+    <div class="grid grid-cols-12 gap-4">
+
+      <!-- 왼쪽 단 -->
+      <div class="col-span-5 flex flex-col gap-4">
+
+        <!-- 시간표 -->
+        <section class="bg-[#1A1A1A] border border-[#2F2F2F] rounded-lg p-4">
+          <h2 class="text-[17px] font-bold text-white mb-3 flex items-center gap-2">
+            <span class="text-xl">🗓️</span> 시간표
+          </h2>
+          <div class="flex flex-col text-sm border border-[#333333] rounded-md bg-[#141414] overflow-hidden">
+            <div class="flex text-center text-[#888888] font-medium border-b border-[#333333] bg-[#1A1A1A] py-1.5">
+              <div class="w-1/2 border-r border-[#333333]">교시</div>
+              <div class="w-1/2">과목</div>
+            </div>
+            {% for subject in timetable %}
+            <div class="flex text-center py-1.5 border-b border-[#2A2A2A] last:border-0
+                        {{ 'bg-[#141414]' if loop.index is odd else 'bg-[#202020]' }}
+                        hover:bg-[#252525]">
+              <div class="w-1/2 border-r border-[#333333] text-[#AAAAAA]">{{ loop.index }}교시</div>
+              <div class="w-1/2 text-[#DDDDDD]">{{ subject }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <!-- 급식 -->
+        {% if school_meal %}
+        <section class="bg-[#1A1A1A] border border-[#2F2F2F] rounded-lg p-4">
+          <div class="flex justify-between items-center mb-3">
+            <h2 class="text-[17px] font-bold text-white flex items-center gap-2">
+              <span class="text-xl">🍱</span> 급식
+            </h2>
+            {% if school_meal.calories %}
+            <span class="text-xs font-medium text-[#888888]">{{ school_meal.calories }}</span>
+            {% endif %}
+          </div>
+          <div class="grid grid-cols-2 gap-y-1.5 gap-x-2 text-[14px] text-[#DDDDDD] ml-1">
+            {% for menu in school_meal.menus %}
+            <div>• {{ menu }}</div>
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+
+        <!-- 날씨 -->
+        {% if weather %}
+        <section class="bg-[#1A1A1A] border border-[#2F2F2F] rounded-lg p-5">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-[18px] font-bold text-white flex items-center gap-2">
+              <span class="text-xl">☀️</span> 날씨
+            </h2>
+            <span class="text-[11px] text-[#555555]">등교시간 기준</span>
+          </div>
+          <div class="flex items-center mt-2">
+            <div class="w-1/2 flex flex-col items-center justify-center border-r border-[#444444] pr-2">
+              <span class="text-6xl mb-2">{{ weather.emoji }}</span>
+              <span class="text-[15px] font-medium text-[#AAAAAA]">{{ weather.description }}</span>
+            </div>
+            <div class="w-1/2 flex flex-col justify-center pl-5">
+              <span class="text-[34px] font-bold text-white leading-none tracking-tighter mb-1.5">{{ weather.temp }}°</span>
+              <span class="text-[12px] text-[#666666] mb-2">최고 {{ weather.max_temp }}° · 최저 {{ weather.min_temp }}°</span>
+              <div class="flex flex-col gap-1.5 text-[14px]">
+                <div class="flex items-center gap-1.5 text-[#629EE4]">
+                  <span>💧</span> 강수확률 {{ weather.rain_prob }}%
+                </div>
+                <div class="flex items-center gap-1.5 text-[#AAAAAA]">
+                  <span>💨</span> 바람 {{ weather.wind_speed }}m/s
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        {% endif %}
+
+      </div>
+
+      <!-- 오른쪽 단: 공지사항 -->
+      <div class="col-span-7 h-full">
+        <section class="bg-[#1A1A1A] border border-[#2F2F2F] rounded-lg p-5 h-full">
+          <h2 class="text-[18px] font-bold text-white mb-4 flex items-center gap-2">
+            <span class="text-xl">📢</span> 공지사항
+          </h2>
+
+          <ul class="flex flex-col gap-2 text-[15px] leading-snug">
+            {% for item in notices %}
+
+            {% if item.type == 'divider' %}
+            <div class="border-b border-[#2F2F2F] my-1"></div>
+
+            {% elif item.type == 'important' %}
+            <li class="flex gap-2">
+              <span class="text-[#888888] mt-0.5">•</span>
+              <span class="font-bold text-white">
+                <span class="inline-block bg-[#3A1A1A] text-[#FF6B6B] text-[11px] font-bold px-1.5 py-0.5 rounded mr-1.5 align-middle">중요</span>{{ item.text }}
+              </span>
+            </li>
+
+            {% elif item.type == 'bold' %}
+            <li class="flex gap-2">
+              <span class="text-[#888888] mt-0.5">•</span>
+              <span class="font-bold text-white tracking-wide">{{ item.text }}</span>
+            </li>
+
+            {% elif item.type == 'italic' %}
+            <li class="flex gap-2">
+              <span class="text-[#888888] mt-0.5">•</span>
+              <span class="italic text-[#CCCCCC]">{{ item.text }}</span>
+            </li>
+
+            {% elif item.type == 'strikethrough' %}
+            <li class="flex gap-2 text-[#666666] line-through decoration-[#555555]">
+              <span class="text-[#555555] mt-0.5">•</span>
+              <span>{{ item.text }}</span>
+            </li>
+
+            {% else %}
+            <li class="flex gap-2">
+              <span class="text-[#888888] mt-0.5">•</span>
+              <span class="text-white">{{ item.text }}</span>
+            </li>
+
+            {% endif %}
+            {% endfor %}
+          </ul>
+
+        </section>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
