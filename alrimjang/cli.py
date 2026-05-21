@@ -1,3 +1,5 @@
+import tomllib
+from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
@@ -46,6 +48,17 @@ def _build_guide_panel() -> Panel:
     )
 
 
+def _get_project_version() -> str:
+    """pyproject.toml에서 버전을 읽어옵니다."""
+    try:
+        pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+        with open(pyproject_path, "rb") as f:
+            data = tomllib.load(f)
+            return data.get("project", {}).get("version", "unknown")
+    except Exception:
+        return "unknown"
+
+
 # ── 헤더 ────────────────────────────────────────────────────────────
 
 
@@ -56,7 +69,10 @@ def print_header(today, next_day) -> None:
     title = Text()
     title.append("📋", style="")
     title.append("  알 림 장", style="bold white")
-    title.append("  v0.1.0\n", style="#888888")
+    
+    version_str = _get_project_version()
+    title.append(f"  v{version_str}\n", style="#888888")
+    
     title.append(
         f"   {today.year}. {today.month:02d}. {today.day:02d} ({weekday_kr[today.weekday()]})",
         style="#AAAAAA",
@@ -174,7 +190,7 @@ def get_user_input(
 
     try:
         result = session.prompt(HTML("<prompt>   1: </prompt>"))
-    except KeyboardInterrupt, EOFError:
+    except (KeyboardInterrupt, EOFError):
         result = None
 
     console.print()
