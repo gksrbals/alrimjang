@@ -221,7 +221,6 @@ def render_and_export(
     filename = f"{next_day.strftime('%Y%m%d')}.png"
 
     # 4. html2image → PNG (Chrome 없으면 Edge 자동 폴백)
-    console.print("[dim]이미지 생성 중...[/dim]")
     hti = _make_hti(str(output_dir))
     hti.screenshot(
         html_str=html,
@@ -234,11 +233,8 @@ def render_and_export(
     # 5. 하단 여백 크롭 (body padding=0이므로 카드 바로 아래에서 자름)
     _autocrop(png_path)
 
-    # 6. 알파 마스크 적용 (rounded-xl 12px → 투명 PNG)
+    # 6. 알파 마스크 적용 (rounded 12px → 투명 PNG)
     _apply_rounded_alpha(png_path, radius=12)
-
-    console.print(f"[green]저장 완료:[/green] output/{filename}")
 
     # 7. 클립보드 복사 (알파 채널 → 검정 배경으로 합성 후 BMP 전송)
     _copy_to_clipboard(png_path)
-    console.print("[green]클립보드에 복사 완료[/green] - 이미지 붙여넣기 Ctrl+V!")
