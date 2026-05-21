@@ -501,7 +501,6 @@ document.addEventListener('alpine:init', () => {
     },
 
     async fetchPreview() {
-      if (!this.notices.trim()) return;
       this.previewController = new AbortController();
       try {
         const res = await fetch('/api/preview', {

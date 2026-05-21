@@ -64,6 +64,8 @@ def index():
 @app.route("/api/config")
 def get_config():
     """현재 설정·데이터를 JSON으로 반환."""
+    if not _cache:
+        return jsonify({"error": "서버 초기화 중입니다."}), 503
     meal = _cache.get("school_meal")
     weather = _cache.get("weather")
     dday = _cache.get("dday_events", [])
@@ -103,6 +105,8 @@ def get_config():
 @app.route("/api/preview", methods=["POST"])
 def preview():
     """공지사항 텍스트를 받아 미리보기 HTML 반환."""
+    if not _cache:
+        return jsonify({"error": "서버 초기화 중입니다."}), 503
     body = request.get_json(silent=True) or {}
     notices_text: str = body.get("notices", "")
     settings: dict = body.get("settings", _cache["settings"])

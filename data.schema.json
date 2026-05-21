@@ -44,19 +44,12 @@
                 "thursday": {"type": "array", "items": {"type": "string"}},
                 "friday": {"type": "array", "items": {"type": "string"}},
                 "overrides": {
-                    "type": "array",
-                    "items": {
+                    "type": "object",
+                    "description": "날짜별 시간표 부분 변경. 키: YYYY-MM-DD, 값: {교시번호: 과목명}",
+                    "additionalProperties": {
                         "type": "object",
-                        "properties": {
-                            "date": {"type": "string", "format": "date", "description": "변경된 날짜 (YYYY-MM-DD)"},
-                            "subjects": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                                "description": "해당 날짜의 시간표"
-                            }
-                        },
-                        "required": ["date", "subjects"],
-                        "additionalProperties": false
+                        "description": "교시 번호(문자열)를 키로, 과목명을 값으로 가지는 객체",
+                        "additionalProperties": {"type": "string"}
                     }
                 }
             }
