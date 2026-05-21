@@ -1,8 +1,9 @@
 import os
 import re
-import requests
 from dataclasses import dataclass
 from datetime import datetime
+
+import requests
 
 
 class DDISH_NM:
@@ -75,5 +76,5 @@ class SchoolMeal:
 
             return SchoolMeal(menus=list(ddish), calories=cal)
 
-        except Exception:
+        except (requests.RequestException, KeyError, IndexError, TypeError, ValueError):
             return None

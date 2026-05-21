@@ -1,8 +1,8 @@
 import os
-import requests
 from dataclasses import dataclass
 from datetime import datetime
 
+import requests
 
 # WMO 날씨 코드 → (이모지, 한국어 설명)
 WMO_CODE_MAP: dict[int, tuple[str, str]] = {
@@ -108,5 +108,5 @@ class Weather:
                 wind_speed=round(hourly["windspeed_10m"][hi] / 3.6, 1),  # km/h → m/s
             )
 
-        except Exception:
+        except (requests.RequestException, KeyError, IndexError, TypeError, ValueError):
             return None
