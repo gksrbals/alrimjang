@@ -416,6 +416,7 @@ document.addEventListener('alpine:init', () => {
     
     editorWidth: 600,
     isDragging: false,
+    previewController: null,
     
     fullData: null,
     ddayList: [],
@@ -459,22 +460,6 @@ document.addEventListener('alpine:init', () => {
         }
       });
       
-      // Splitter global events
-      window.addEventListener('mousemove', (e) => {
-        if (!this.isDragging) return;
-        const offset = this.$refs.splitContainer.getBoundingClientRect().left;
-        let nw = e.clientX - offset - 6;
-        if (nw < 300) nw = 300;
-        this.editorWidth = nw;
-        this.scalePreview();
-      });
-      window.addEventListener('mouseup', () => {
-        if (this.isDragging) {
-          this.isDragging = false;
-          document.body.style.cursor = '';
-        }
-      });
-      
       // Close emoji picker on drawer scroll
       const drawerBody = document.getElementById('drawer-body-scroll');
       if (drawerBody) {
@@ -496,19 +481,22 @@ document.addEventListener('alpine:init', () => {
 
     schedulePreview() {
       clearTimeout(this.previewDebounce);
+      this.previewController?.abort();
       this.previewDebounce = setTimeout(() => this.fetchPreview(), 200);
     },
 
     async fetchPreview() {
       if (!this.notices.trim()) return;
+      this.previewController = new AbortController();
       try {
         const res = await fetch('/api/preview', {
           method: 'POST',
+          signal: this.previewController.signal,
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ notices: this.notices, settings: this.settings })
         });
         const data = await res.json();
-        
+
         const doc = this.$refs.previewFrame.contentDocument || this.$refs.previewFrame.contentWindow.document;
         if (!this.iframeReady) {
           doc.open(); doc.write(data.html); doc.close();
@@ -520,7 +508,9 @@ document.addEventListener('alpine:init', () => {
             requestAnimationFrame(() => requestAnimationFrame(() => this.scalePreview()));
           }
         }
-      } catch(e) {}
+      } catch (e) {
+        if (e.name !== 'AbortError') console.error('미리보기 오류:', e);
+      }
     },
 
     scalePreview() {
@@ -699,6 +689,21 @@ document.addEventListener('alpine:init', () => {
     startDrag() {
       this.isDragging = true;
       document.body.style.cursor = 'col-resize';
+      const onMove = (e) => {
+        const offset = this.$refs.splitContainer.getBoundingClientRect().left;
+        let nw = e.clientX - offset - 6;
+        if (nw < 300) nw = 300;
+        this.editorWidth = nw;
+        this.scalePreview();
+      };
+      const onUp = () => {
+        this.isDragging = false;
+        document.body.style.cursor = '';
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
     },
     onKeydown(e) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); this.generateImage(); return; }
