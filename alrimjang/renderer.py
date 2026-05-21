@@ -23,7 +23,7 @@ _JINJA_ENV = Environment(loader=FileSystemLoader(str(_TEMPLATE_DIR)))
 # ── 마크다운 파싱 ──────────────────────────────────────────────────
 
 
-def _parse_notices(lines: list[str]) -> list[dict]:
+def parse_notices(lines: list[str]) -> list[dict]:
     """
     공지사항 줄 목록을 타입별 dict 목록으로 변환.
 
@@ -72,7 +72,7 @@ def _parse_notices(lines: list[str]) -> list[dict]:
 # ── HTML 렌더링 ───────────────────────────────────────────────────
 
 
-def _render_html(
+def render_html(
     today: datetime,
     next_day: datetime,
     timetable: list[str],
@@ -208,10 +208,10 @@ def render_and_export(
     dday_events: list["DdayEvent"] | None = None,
 ) -> None:
     # 1. 마크다운 파싱
-    notices = _parse_notices(raw_notices)
+    notices = parse_notices(raw_notices)
 
     # 2. HTML 생성
-    html = _render_html(
+    html = render_html(
         today, next_day, timetable, school_meal, weather, notices, dday_events or []
     )
 

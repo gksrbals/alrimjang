@@ -1,3 +1,4 @@
+import argparse
 import contextlib
 import io
 import json
@@ -34,7 +35,6 @@ console = Console(highlight=False)
 
 # 한국 공휴일
 _KR_HOLIDAYS = holidays.KR()
-
 
 
 
@@ -104,10 +104,10 @@ def _print_skip(label: str) -> None:
     console.print(f"  [#AAAAAA]- {label}[/#AAAAAA]")
 
 
-# ── 메인 ────────────────────────────────────────────────────────────
+# ── CLI 모드 ────────────────────────────────────────────────────
 
 
-def main() -> None:
+def main_cli() -> None:
     # ══════════════════════════════════════════════════
     #  Phase 1: 입력
     # ══════════════════════════════════════════════════
@@ -228,6 +228,43 @@ def main() -> None:
     result.append("클립보드 복사 완료", style="green")
     result.append(" — Ctrl+V로 붙여넣기!\n", style="#AAAAAA")
     console.print(result)
+
+
+# ── 웹 모드 ────────────────────────────────────────────────────
+
+
+def main_web() -> None:
+    from alrimjang.web import run_web
+
+    run_web()
+
+
+# ── 메인 ────────────────────────────────────────────────────────────
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="📋 알림장 — 학급 알림장 이미지 자동 생성",
+    )
+    parser.add_argument(
+        "--cli",
+        action="store_true",
+        help="CLI 모드로 실행 (기본: 웹 에디터)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=5000,
+        help="웹 에디터 포트 (기본: 5000)",
+    )
+    args = parser.parse_args()
+
+    if args.cli:
+        main_cli()
+    else:
+        from alrimjang.web import run_web
+
+        run_web(port=args.port)
 
 
 if __name__ == "__main__":
