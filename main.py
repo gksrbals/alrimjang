@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -16,6 +17,7 @@ from rich.console import Console
 from alrimjang.timetable import Timetable
 from alrimjang.school_meal import SchoolMeal
 from alrimjang.weather import Weather
+from alrimjang.dday import DdayEvent, load_dday_events
 from alrimjang.cli import get_user_input
 from alrimjang.renderer import render_and_export
 
@@ -121,6 +123,16 @@ def main() -> None:
     else:
         console.print("[yellow]날씨 정보 없음 (섹션 숨김)[/yellow]")
 
+    # D-Day 로드
+    dday_ignore = os.getenv("DDAY_IGNORE", "False").strip().lower() in ("true", "1")
+    dday_events: list[DdayEvent] = []
+    if not dday_ignore:
+        dday_events = load_dday_events(next_datetime)
+        if dday_events:
+            console.print(f"[green]D-Day {len(dday_events)}개 로드 완료[/green]")
+    else:
+        console.print("[dim]D-Day 섹션 비활성화 (DDAY_IGNORE=True)[/dim]")
+
     console.print()
 
     # 렌더링 & 출력
@@ -132,6 +144,7 @@ def main() -> None:
         school_meal=school_meal,
         weather=weather,
         raw_notices=raw_notices,
+        dday_events=dday_events,
     )
 
     console.rule("[bold green]완료[/bold green]")

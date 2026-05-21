@@ -11,6 +11,7 @@ from rich.console import Console
 
 from .school_meal import SchoolMeal
 from .weather import Weather
+from .dday import DdayEvent
 
 console = Console(highlight=False)
 
@@ -78,6 +79,7 @@ def _render_html(
     school_meal: "SchoolMeal | None",
     weather: "Weather | None",
     notices: list[dict],
+    dday_events: list[DdayEvent],
 ) -> str:
     template = _JINJA_ENV.get_template("notice.html.j2")
 
@@ -90,6 +92,7 @@ def _render_html(
         school_meal=school_meal,
         weather=weather,
         notices=notices,
+        dday_events=dday_events,
     )
 
 
@@ -202,12 +205,15 @@ def render_and_export(
     school_meal: "SchoolMeal | None",
     weather: "Weather | None",
     raw_notices: list[str],
+    dday_events: list["DdayEvent"] | None = None,
 ) -> None:
     # 1. 마크다운 파싱
     notices = _parse_notices(raw_notices)
 
     # 2. HTML 생성
-    html = _render_html(today, next_day, timetable, school_meal, weather, notices)
+    html = _render_html(
+        today, next_day, timetable, school_meal, weather, notices, dday_events or []
+    )
 
     # 3. output 폴더 준비
     output_dir = Path("output")

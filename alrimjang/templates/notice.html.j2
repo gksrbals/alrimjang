@@ -32,6 +32,27 @@
       </h1>
     </header>
 
+    <!-- D-Day 카운트다운 -->
+    {% if dday_events %}
+    <div class="mb-4 flex flex-wrap gap-2.5">
+      {% for event in dday_events %}
+      <div class="flex items-center gap-2 bg-[#1A1A1A] border border-[#2F2F2F] rounded-full px-4 py-2">
+        <span class="text-base">{{ event.emoji }}</span>
+        <span class="text-[13px] text-[#BBBBBB] font-medium">{{ event.name }}</span>
+        {% if event.remaining == 0 %}
+        <span class="text-[13px] font-bold text-[#FF6B6B]">D-Day</span>
+        {% elif event.remaining <= 3 %}
+        <span class="text-[13px] font-bold text-[#FF6B6B]">D-{{ event.remaining }}</span>
+        {% elif event.remaining <= 7 %}
+        <span class="text-[13px] font-bold text-[#FFAA33]">D-{{ event.remaining }}</span>
+        {% else %}
+        <span class="text-[13px] font-bold text-[#629EE4]">D-{{ event.remaining }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- 2단 그리드 -->
     <div class="grid grid-cols-12 gap-4">
 

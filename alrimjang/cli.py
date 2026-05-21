@@ -86,7 +86,7 @@ def get_user_input() -> list[str]:
 
     try:
         result = session.prompt(HTML("<prompt>   1: </prompt>"))
-    except (KeyboardInterrupt, EOFError):
+    except KeyboardInterrupt, EOFError:
         result = None
 
     console.print()

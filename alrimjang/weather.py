@@ -35,13 +35,13 @@ WMO_CODE_MAP: dict[int, tuple[str, str]] = {
 
 @dataclass(frozen=True)
 class Weather:
-    emoji: str          # 날씨 이모지 (09시 기준)
-    description: str    # 날씨 설명  (09시 기준)
-    temp: int           # 09시 기온 (°C)
-    max_temp: int       # 일 최고기온 (°C)
-    min_temp: int       # 일 최저기온 (°C)
-    rain_prob: int      # 강수확률 %, 09시 기준
-    wind_speed: float   # 풍속 m/s,  09시 기준
+    emoji: str  # 날씨 이모지 (09시 기준)
+    description: str  # 날씨 설명  (09시 기준)
+    temp: int  # 09시 기온 (°C)
+    max_temp: int  # 일 최고기온 (°C)
+    min_temp: int  # 일 최저기온 (°C)
+    rain_prob: int  # 강수확률 %, 09시 기준
+    wind_speed: float  # 풍속 m/s,  09시 기준
 
     @staticmethod
     def fetch_weather(dt: datetime) -> "Weather | None":
