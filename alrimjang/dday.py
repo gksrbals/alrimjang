@@ -7,10 +7,6 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
-from rich.console import Console
-
-console = Console(highlight=False)
-
 
 @dataclass
 class DdayEvent:
@@ -45,14 +41,12 @@ def load_dday_events(
     """
     p = Path(path)
     if not p.exists():
-        console.print("[yellow]dday.json 파일 없음 (D-Day 섹션 숨김)[/yellow]")
         return []
 
     try:
         with open(p, "r", encoding="utf-8") as f:
             raw = json.load(f)
-    except (json.JSONDecodeError, Exception) as e:
-        console.print(f"[red]dday.json 파싱 오류: {e}[/red]")
+    except json.JSONDecodeError, Exception:
         return []
 
     ref_date = reference.date() if isinstance(reference, datetime) else reference

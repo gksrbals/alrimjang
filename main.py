@@ -147,7 +147,7 @@ def main() -> None:
 
     # 급식
     school_meal = None
-    meal_enabled = os.getenv("SCHOOL_MEAL_IGNORE", "True").strip().lower() in (
+    meal_enabled = os.getenv("SCHOOL_MEAL_ENABLED", "True").strip().lower() in (
         "true",
         "1",
     )
@@ -162,11 +162,11 @@ def main() -> None:
 
     # 날씨
     weather = None
-    weather_ignore = os.getenv("WEATHER_IGNORE", "False").strip().lower() in (
+    weather_enabled = os.getenv("WEATHER_ENABLED", "True").strip().lower() in (
         "true",
         "1",
     )
-    if not weather_ignore:
+    if weather_enabled:
         weather = Weather.fetch_weather(next_datetime)
         if weather:
             _print_step(
@@ -179,8 +179,8 @@ def main() -> None:
 
     # D-Day
     dday_events: list[DdayEvent] = []
-    dday_ignore = os.getenv("DDAY_IGNORE", "False").strip().lower() in ("true", "1")
-    if not dday_ignore:
+    dday_enabled = os.getenv("DDAY_ENABLED", "True").strip().lower() in ("true", "1")
+    if dday_enabled:
         dday_events = load_dday_events(next_datetime)
         if dday_events:
             _print_step("D-Day", f"{len(dday_events)}개")
