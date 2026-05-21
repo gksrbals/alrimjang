@@ -35,20 +35,20 @@ WMO_CODE_MAP: dict[int, tuple[str, str]] = {
 
 @dataclass(frozen=True)
 class Weather:
-    emoji: str  # 날씨 이모지 (09시 기준)
-    description: str  # 날씨 설명  (09시 기준)
-    temp: int  # 09시 기온 (°C)
+    emoji: str  # 날씨 이모지 (등교시간 기준)
+    description: str  # 날씨 설명  (등교시간 기준)
+    temp: int  # 등교시간 기온 (°C)
     max_temp: int  # 일 최고기온 (°C)
     min_temp: int  # 일 최저기온 (°C)
-    rain_prob: int  # 강수확률 %, 09시 기준
-    wind_speed: float  # 풍속 m/s,  09시 기준
+    rain_prob: int  # 강수확률 %, 등교시간 기준
+    wind_speed: float  # 풍속 m/s,  등교시간 기준
 
     @staticmethod
-    def fetch_weather(dt: datetime) -> "Weather | None":
+    def fetch_weather(dt: datetime, school_hour: int = 9) -> "Weather | None":
         """
         Open-Meteo API로 날씨 조회 (무료, API 키 불필요).
 
-        - 날씨 코드·기온·강수확률·풍속은 등교 시간(09:00) 기준 hourly 데이터 사용
+        - 날씨 코드·기온·강수확률·풍속은 school_hour 기준 hourly 데이터 사용
         - 일 최고/최저기온은 daily 데이터 사용
         - 오류 시 None 반환
         """
@@ -59,7 +59,7 @@ class Weather:
                 return None
 
             target_date = dt.strftime("%Y-%m-%d")
-            target_hour = f"{target_date}T09:00"  # 등교 09시 슬롯
+            target_hour = f"{target_date}T{school_hour:02d}:00"
 
             url = "https://api.open-meteo.com/v1/forecast"
             params = {
@@ -85,7 +85,7 @@ class Weather:
             hourly = data["hourly"]
             daily = data["daily"]
 
-            # 09시 슬롯 인덱스
+            # 등교시간 슬롯 인덱스
             if target_hour not in hourly["time"]:
                 return None
             hi = hourly["time"].index(target_hour)

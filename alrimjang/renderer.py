@@ -64,6 +64,7 @@ def render_html(
     weather: "Weather | None",
     notices: list[dict],
     dday_events: list[DdayEvent],
+    school_start_hour: int = 9,
 ) -> str:
     template = _JINJA_ENV.get_template("notice.html.j2")
     weekday_kr = ["월", "화", "수", "목", "금", "토", "일"]
@@ -76,6 +77,7 @@ def render_html(
         weather=weather,
         notices=notices,
         dday_events=dday_events,
+        school_start_hour=school_start_hour,
     )
 
 

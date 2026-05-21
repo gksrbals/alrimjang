@@ -300,6 +300,19 @@
   </div>
   <div class="drawer-body" id="drawer-body-scroll">
     
+    <!-- 기본 설정 -->
+    <div class="data-section">
+      <div class="data-section-header">⚙️ 기본 설정</div>
+      <div class="data-section-body" style="padding: 14px;">
+        <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:var(--text-dim);">
+          <span>🏫 등교 시간</span>
+          <input type="number" class="data-input" style="width:60px; text-align:center;"
+                 x-model.number="schoolStartHour" min="1" max="23" step="1">
+          <span>시</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Overrides (Sparse UI) -->
     <div class="data-section">
       <div class="data-section-header">
@@ -406,7 +419,8 @@ document.addEventListener('alpine:init', () => {
     config: null,
     notices: '',
     settings: { meal: true, weather: true, dday: true },
-    
+    schoolStartHour: 9,
+
     showGuide: false,
     showSettings: false,
     showDrawer: false,
@@ -476,6 +490,7 @@ document.addEventListener('alpine:init', () => {
         this.settings.meal = this.config.settings.meal;
         this.settings.weather = this.config.settings.weather;
         this.settings.dday = this.config.settings.dday;
+        this.schoolStartHour = this.config.settings.school_start_hour ?? 9;
       } catch { this.addToast('설정을 불러올 수 없습니다.', 'error'); }
     },
 
@@ -572,6 +587,7 @@ document.addEventListener('alpine:init', () => {
         const res = await fetch('/api/data');
         const data = await res.json();
         this.fullData = data;
+        this.schoolStartHour = data.school_start_hour ?? 9;
         this.ddayList = (data.dday || []).map(d => ({ ...d, id: Math.random().toString(36).substr(2,9) }));
         this.holidayList = data.school_holidays ? (Array.isArray(data.school_holidays) ? data.school_holidays : Object.entries(data.school_holidays).map(([date,name])=>({date,name}))) : [];
         
@@ -620,6 +636,7 @@ document.addEventListener('alpine:init', () => {
 
       const body = {
         ...this.fullData,
+        school_start_hour: this.schoolStartHour,
         dday: this.ddayList.filter(d => d.name && d.date),
         school_holidays: this.holidayList.filter(h => h.name && h.date),
         timetable: ttDict

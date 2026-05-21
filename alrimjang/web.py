@@ -74,7 +74,10 @@ def get_config():
             "next_day_str": _cache["next_day_str"],
             "next_day_date": _cache["next_day"].isoformat(),
             "timetable": _cache["timetable"],
-            "settings": _cache["settings"],
+            "settings": {
+                **_cache["settings"],
+                "school_start_hour": _cache.get("school_start_hour", 9),
+            },
             "school_meal": {
                 "menus": meal.menus,
                 "calories": meal.calories,
@@ -119,6 +122,7 @@ def preview():
         weather=weather,
         notices=notices,
         dday_events=dday,
+        school_start_hour=_cache.get("school_start_hour", 9),
     )
 
     return jsonify({"html": html})
@@ -209,13 +213,20 @@ def update_data():
     timetable_obj = Timetable.load_timetable(body)
     timetable = timetable_obj.get_timetable(next_dt)
 
-    # D-Day 재로드
-    dday_events = load_dday_events(next_dt, body)
+    # D-Day 재로드 (생성일 기준)
+    dday_events = load_dday_events(today_dt, body)
 
-    # 날짜가 바뀌었으면 급식/날씨 재조회
+    # 날짜가 바뀌었으면 급식 재조회
+    old_school_start_hour = _cache.get("school_start_hour", 9)
+    new_school_start_hour = body.get("school_start_hour", 9)
+    if not isinstance(new_school_start_hour, int) or not (1 <= new_school_start_hour <= 23):
+        new_school_start_hour = 9
     if next_day != old_next_day:
         _cache["school_meal"] = SchoolMeal.fetch_school_meal(next_dt)
-        _cache["weather"] = Weather.fetch_weather(next_dt)
+
+    # 날짜 또는 등교시간이 바뀌었으면 날씨 재조회
+    if next_day != old_next_day or new_school_start_hour != old_school_start_hour:
+        _cache["weather"] = Weather.fetch_weather(next_dt, school_hour=new_school_start_hour)
 
     _cache.update(
         {
@@ -228,6 +239,7 @@ def update_data():
             "next_day_str": f"{next_day.month}월 {next_day.day}일 {weekday_kr[next_day.weekday()]}요일",
             "timetable": timetable,
             "dday_events": dday_events,
+            "school_start_hour": new_school_start_hour,
         }
     )
 
@@ -309,16 +321,19 @@ def run_web(host: str = "127.0.0.1", port: int = 5000) -> None:
         _skip("급식 정보 없음")
 
     # ── 4. 날씨 (항상 시도) ──
+    school_start_hour = data.get("school_start_hour", 9)
+    if not isinstance(school_start_hour, int) or not (1 <= school_start_hour <= 23):
+        school_start_hour = 9
     weather = None
     with console.status("  ⏳ 날씨 정보 조회 중...", spinner="dots"):
-        weather = Weather.fetch_weather(next_dt)
+        weather = Weather.fetch_weather(next_dt, school_hour=school_start_hour)
     if weather:
         _step("날씨", f"{weather.emoji} {weather.temp}° {weather.description}")
     else:
         _skip("날씨 정보 없음")
 
-    # ── 5. D-Day ──
-    dday_events = load_dday_events(next_dt, data)
+    # ── 5. D-Day (생성일 기준) ──
+    dday_events = load_dday_events(today_dt, data)
     if dday_events:
         _step("D-Day", f"{len(dday_events)}개")
     else:
@@ -343,6 +358,7 @@ def run_web(host: str = "127.0.0.1", port: int = 5000) -> None:
             "school_meal": school_meal,
             "weather": weather,
             "dday_events": dday_events,
+            "school_start_hour": school_start_hour,
             "settings": {
                 "meal": meal_on,
                 "weather": weather_on,

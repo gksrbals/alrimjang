@@ -3,6 +3,13 @@
     "title": "Alrimjang Data",
     "type": "object",
     "properties": {
+        "school_start_hour": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 23,
+            "default": 9,
+            "description": "등교 시간 (시 단위, 1~23)"
+        },
         "dday": {
             "type": "array",
             "items": {

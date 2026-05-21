@@ -12,7 +12,7 @@ class DdayEvent:
 
     name: str
     target_date: date
-    remaining: int  # 남은 일수 (0 = 당일, 음수 = 지남)
+    remaining: int  # 남은 일수 (1 이상; 당일·과거는 load_dday_events에서 제외됨)
     emoji: str = "📌"
 
 
@@ -24,11 +24,11 @@ def load_dday_events(
     data dict에서 이벤트를 로드하고 남은 일수를 계산.
 
     Args:
-        reference: 기준일 (다음 등교일)
+        reference: 기준일 (생성일, 오늘)
         data: 알림장 데이터 딕셔너리
 
     Returns:
-        남은 일수 기준 오름차순 정렬된 이벤트 목록 (지난 이벤트 제외)
+        남은 일수 기준 오름차순 정렬된 이벤트 목록 (당일·과거 이벤트 제외)
     """
     raw = data.get("dday", [])
 
@@ -42,8 +42,8 @@ def load_dday_events(
             continue
 
         remaining = (target - ref_date).days
-        if remaining < 0:
-            continue  # 지난 이벤트 제외
+        if remaining <= 0:
+            continue  # 당일(0) 및 지난 이벤트 제외
 
         events.append(
             DdayEvent(
