@@ -22,19 +22,6 @@ _PT_STYLE = Style.from_dict(
 )
 
 
-def _toolbar():
-    return HTML(
-        '<style bg="#111111" fg="#444444">│</style> '
-        "<b>Enter</b>=줄바꿈  "
-        '<style bg="#111111" fg="#444444">│</style> '
-        "<b>↑↓</b>=줄이동  "
-        '<style bg="#111111" fg="#444444">│</style> '
-        "<b>Ctrl+D</b>=완료  "
-        '<style bg="#111111" fg="#444444">│</style> '
-        "<b>Ctrl+C</b>=취소"
-    )
-
-
 # ── 마크다운 가이드 패널 ────────────────────────────────────────────
 
 
@@ -110,36 +97,75 @@ def print_progress_header(next_day) -> None:
 # ── 공지사항 입력 ────────────────────────────────────────────────────
 
 
-def get_user_input() -> list[str]:
+def get_user_input(
+    meal_on: bool = True,
+    weather_on: bool = True,
+    dday_on: bool = True,
+) -> tuple[list[str] | None, bool, bool, bool]:
     """
     prompt_toolkit 멀티라인 에디터로 공지사항 입력.
+    F1, F2, F3 키를 통해 설정(급식, 날씨, D-Day)을 토글할 수 있음.
 
-    - 방향키(↑↓←→), Home/End, Backspace/Delete 완전 지원
-    - Enter       → 새 줄
-    - Ctrl+D      → 입력 완료
-    - Ctrl+C      → 취소 (빈 목록 반환)
-
-    지원 마크다운:
-      **텍스트**    → 볼드
-      *텍스트*      → 이탤릭
-      ~~텍스트~~    → 취소선
-      [중요] 텍스트  → 빨간 배지
-      ---           → 구분선
+    반환값:
+        (공지사항_줄_목록, 급식_상태, 날씨_상태, DDay_상태)
+        취소 시 공지사항_줄_목록은 None 반환.
     """
     console.print(_build_guide_panel())
+
+    # 상태 저장용 dict (키 바인딩 내부에서 수정하기 위해)
+    state = {
+        "meal": meal_on,
+        "weather": weather_on,
+        "dday": dday_on,
+    }
+
+    def _toolbar():
+        meal_color = "#629EE4" if state["meal"] else "#555555"
+        weather_color = "#629EE4" if state["weather"] else "#555555"
+        dday_color = "#629EE4" if state["dday"] else "#555555"
+
+        meal_text = "ON" if state["meal"] else "OFF"
+        weather_text = "ON" if state["weather"] else "OFF"
+        dday_text = "ON" if state["dday"] else "OFF"
+
+        return HTML(
+            '<style bg="#111111" fg="#444444">│</style> '
+            "<b>Enter</b>=줄바꿈  "
+            '<style bg="#111111" fg="#444444">│</style> '
+            "<b>Ctrl+D</b>=완료  "
+            '<style bg="#111111" fg="#444444">│</style> '
+            "<b>Ctrl+C</b>=취소  "
+            '<style bg="#111111" fg="#444444">│</style> '
+            f'<b>F1</b> 급식:<style fg="{meal_color}">{meal_text}</style>  '
+            f'<b>F2</b> 날씨:<style fg="{weather_color}">{weather_text}</style>  '
+            f'<b>F3</b> D-Day:<style fg="{dday_color}">{dday_text}</style>'
+        )
 
     # 커스텀 키 바인딩
     kb = KeyBindings()
 
     @kb.add("c-d")
     def _submit(event):
-        """Ctrl+D → 완료"""
         event.app.exit(result=event.app.current_buffer.text)
 
     @kb.add("c-c")
     def _cancel(event):
-        """Ctrl+C → 취소"""
         event.app.exit(result=None)
+
+    @kb.add("f1")
+    def _toggle_meal(event):
+        state["meal"] = not state["meal"]
+        event.app.invalidate()
+
+    @kb.add("f2")
+    def _toggle_weather(event):
+        state["weather"] = not state["weather"]
+        event.app.invalidate()
+
+    @kb.add("f3")
+    def _toggle_dday(event):
+        state["dday"] = not state["dday"]
+        event.app.invalidate()
 
     session: PromptSession = PromptSession(
         history=InMemoryHistory(),
@@ -159,8 +185,8 @@ def get_user_input() -> list[str]:
 
     console.print()
 
-    if not result:
-        return []
+    if result is None:
+        return None, state["meal"], state["weather"], state["dday"]
 
     # 빈 줄 제거 (앞뒤만, 중간 빈 줄은 구분선으로 활용 가능하므로 유지)
     lines = result.splitlines()
@@ -169,4 +195,4 @@ def get_user_input() -> list[str]:
     while lines and not lines[-1].strip():
         lines.pop()
 
-    return lines
+    return lines, state["meal"], state["weather"], state["dday"]

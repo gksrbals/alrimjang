@@ -13,7 +13,7 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 import holidays
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 from rich.console import Console
 from rich.text import Text
 
@@ -126,7 +126,28 @@ def main() -> None:
 
     print_header(today, next_day)
 
-    raw_notices = get_user_input()
+    meal_env = os.getenv("SCHOOL_MEAL_ENABLED", "True").strip().lower() in ("true", "1")
+    weather_env = os.getenv("WEATHER_ENABLED", "True").strip().lower() in ("true", "1")
+    dday_env = os.getenv("DDAY_ENABLED", "True").strip().lower() in ("true", "1")
+
+    raw_notices, meal_enabled, weather_enabled, dday_enabled = get_user_input(
+        meal_env, weather_env, dday_env
+    )
+
+    if raw_notices is None:
+        console.print("  [red]✗ 공지사항 입력이 취소되었습니다. 종료합니다.[/red]")
+        sys.exit(0)
+
+    # 설정이 변경되었다면 .env에 저장
+    env_path = Path(".env")
+    if env_path.exists():
+        if meal_enabled != meal_env:
+            set_key(str(env_path), "SCHOOL_MEAL_ENABLED", str(meal_enabled))
+        if weather_enabled != weather_env:
+            set_key(str(env_path), "WEATHER_ENABLED", str(weather_enabled))
+        if dday_enabled != dday_env:
+            set_key(str(env_path), "DDAY_ENABLED", str(dday_enabled))
+
     if not raw_notices:
         console.print("  [red]✗ 공지사항이 없습니다. 종료합니다.[/red]")
         sys.exit(0)
@@ -147,10 +168,6 @@ def main() -> None:
 
     # 급식
     school_meal = None
-    meal_enabled = os.getenv("SCHOOL_MEAL_ENABLED", "True").strip().lower() in (
-        "true",
-        "1",
-    )
     if meal_enabled:
         school_meal = SchoolMeal.fetch_school_meal(next_datetime)
         if school_meal:
@@ -162,10 +179,6 @@ def main() -> None:
 
     # 날씨
     weather = None
-    weather_enabled = os.getenv("WEATHER_ENABLED", "True").strip().lower() in (
-        "true",
-        "1",
-    )
     if weather_enabled:
         weather = Weather.fetch_weather(next_datetime)
         if weather:
@@ -179,7 +192,6 @@ def main() -> None:
 
     # D-Day
     dday_events: list[DdayEvent] = []
-    dday_enabled = os.getenv("DDAY_ENABLED", "True").strip().lower() in ("true", "1")
     if dday_enabled:
         dday_events = load_dday_events(next_datetime)
         if dday_events:

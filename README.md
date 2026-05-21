@@ -46,6 +46,11 @@ uv run main.py
 | `Ctrl+Z` | 되돌리기 |
 | **`Ctrl+D`** | **입력 완료** |
 | `Ctrl+C` | 취소 후 종료 |
+| **`F1`** | **급식 섹션 켜기/끄기** |
+| **`F2`** | **날씨 섹션 켜기/끄기** |
+| **`F3`** | **D-Day 섹션 켜기/끄기** |
+
+> 💡 **Tip:** 하단 툴바에서 ON/OFF 상태를 실시간으로 확인하고 토글할 수 있습니다. 변경된 상태는 다음 실행 시에도 자동으로 유지됩니다 (`.env` 파일 자동 저장).
 
 ### 마크다운 문법
 
@@ -81,15 +86,22 @@ uv run main.py
 NEIS_API_KEY=           # https://open.neis.go.kr 에서 발급
 ATPT_OFCDC_SC_CODE=     # 시도교육청코드
 SD_SCHUL_CODE=          # 행정표준코드
-SCHOOL_MEAL_ENABLED=True # True=표시 / False=숨김
+SCHOOL_MEAL_ENABLED=True # True = 급식 섹션 표시 / False = 급식 섹션 숨김 (F1키로 변경 시 자동 저장)
 
-# 날씨 (학교 좌표)
-WEATHER_LAT=0.0         # 위도
-WEATHER_LON=0.0         # 경도
-WEATHER_ENABLED=True    # True=표시 / False=숨김
+# ──────────────────────────────
+# Open-Meteo 날씨 (학교 위치 좌표)
+# ──────────────────────────────
+# 학교 좌표 (Google Maps에서 확인 가능)
+WEATHER_LAT=0.0
+WEATHER_LON=0.0
+# True = 표시 / False = 숨김 (F2키로 변경 시 자동 저장)
+WEATHER_ENABLED=True
 
-# D-Day
-DDAY_ENABLED=True       # True=표시 / False=숨김
+# ──────────────────────────────
+# D-Day 카운트다운
+# ──────────────────────────────
+# True = 표시 / False = 숨김 (F3키로 변경 시 자동 저장)
+DDAY_ENABLED=True
 ```
 
 ---
