@@ -86,9 +86,9 @@ def get_next_school_day(school_holidays: dict[str, str]) -> tuple[date, date]:
         console.print(
             f"\n  [yellow]⚠️  내일({tomorrow.month}/{tomorrow.day})은 "
             f"[bold]{name}[/bold]입니다.[/yellow]\n"
-            f"  [dim]다음 등교일("
+            f"  [#AAAAAA]다음 등교일("
             f"{candidate.month}/{candidate.day} "
-            f"{weekday_kr[candidate.weekday()]})로 알림장을 작성합니다.[/dim]\n"
+            f"{weekday_kr[candidate.weekday()]})로 알림장을 작성합니다.[/#AAAAAA]\n"
         )
 
     return today, candidate
@@ -97,10 +97,10 @@ def get_next_school_day(school_holidays: dict[str, str]) -> tuple[date, date]:
 # ── 진행 상태 출력 헬퍼 ─────────────────────────────────────────────
 
 
-def _print_step(label: str, detail: str = "", style: str = "dim") -> None:
+def _print_step(label: str, detail: str = "", style: str = "#AAAAAA") -> None:
     """✓ 라벨 디테일 형식으로 한 줄 출력."""
     text = Text()
-    text.append("  ✓ ", style="dim green")
+    text.append("  ✓ ", style="green")
     text.append(label, style=style)
     if detail:
         text.append(f" {detail}", style="white")
@@ -109,7 +109,7 @@ def _print_step(label: str, detail: str = "", style: str = "dim") -> None:
 
 def _print_skip(label: str) -> None:
     """- 라벨 형식으로 비활성 항목 출력."""
-    console.print(f"  [dim]- {label}[/dim]")
+    console.print(f"  [#AAAAAA]- {label}[/#AAAAAA]")
 
 
 # ── 메인 ────────────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ def main() -> None:
     console.print()
     today_datetime = datetime(today.year, today.month, today.day)
 
-    with console.status("  [dim]이미지 생성 중...[/dim]", spinner="dots"):
+    with console.status("  [#AAAAAA]이미지 생성 중...[/#AAAAAA]", spinner="dots"):
         # html2image 브라우저 stdout/stderr 억제
         with (
             contextlib.redirect_stdout(io.StringIO()),
@@ -228,7 +228,7 @@ def main() -> None:
     result.append(" 저장 완료\n", style="green")
     result.append("  📋 ", style="")
     result.append("클립보드 복사 완료", style="green")
-    result.append(" — Ctrl+V로 붙여넣기!\n", style="dim")
+    result.append(" — Ctrl+V로 붙여넣기!\n", style="#AAAAAA")
     console.print(result)
 
 

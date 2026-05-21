@@ -15,9 +15,9 @@ console = Console(highlight=False)
 
 _PT_STYLE = Style.from_dict(
     {
-        "prompt": "#888888",
-        "bottom-toolbar": "bg:#111111 #555555",
-        "bottom-toolbar.text": "#888888",
+        "prompt": "#BBBBBB",
+        "bottom-toolbar": "#AAAAAA",
+        "bottom-toolbar.text": "#CCCCCC",
     }
 )
 
@@ -28,20 +28,20 @@ _PT_STYLE = Style.from_dict(
 def _build_guide_panel() -> Panel:
     """공지사항 입력 가이드를 예쁜 패널로 렌더링."""
     guide = Table.grid(padding=(0, 2))
-    guide.add_column(style="dim white", justify="right", min_width=12)
+    guide.add_column(style="white", justify="right", min_width=12)
     guide.add_column()
 
     guide.add_row("**텍스트**", Text("볼드 처리", style="bold white"))
-    guide.add_row("*텍스트*", Text("이탤릭 처리", style="italic #CCCCCC"))
-    guide.add_row("~~텍스트~~", Text("취소선 처리", style="strike dim"))
+    guide.add_row("*텍스트*", Text("이탤릭 처리", style="italic #E0E0E0"))
+    guide.add_row("~~텍스트~~", Text("취소선 처리", style="strike #AAAAAA"))
     guide.add_row("[중요] 텍스트", Text("중요 배지", style="bold #FF6B6B"))
-    guide.add_row("---", Text("구분선", style="dim"))
+    guide.add_row("---", Text("구분선", style="#AAAAAA"))
 
     return Panel(
         guide,
         title="[bold]📢 공지사항 입력[/bold]",
-        subtitle="[dim]마크다운 문법 지원[/dim]",
-        border_style="#333333",
+        subtitle="[#AAAAAA]마크다운 문법 지원[/#AAAAAA]",
+        border_style="#777777",
         padding=(1, 2),
     )
 
@@ -56,22 +56,22 @@ def print_header(today, next_day) -> None:
     title = Text()
     title.append("📋", style="")
     title.append("  알 림 장", style="bold white")
-    title.append("  v0.1.0\n", style="dim #555555")
+    title.append("  v0.1.0\n", style="#888888")
     title.append(
         f"   {today.year}. {today.month:02d}. {today.day:02d} ({weekday_kr[today.weekday()]})",
-        style="dim",
+        style="#AAAAAA",
     )
-    title.append("  →  ", style="dim #444444")
+    title.append("  →  ", style="#888888")
     title.append(
         f"{next_day.month}월 {next_day.day}일 {weekday_kr[next_day.weekday()]}요일",
         style="bold #629EE4",
     )
-    title.append(" 알림장 작성", style="dim")
+    title.append(" 알림장 작성", style="#AAAAAA")
 
     console.print(
         Panel(
             title,
-            border_style="#333333",
+            border_style="#777777",
             padding=(1, 2),
         )
     )
@@ -105,14 +105,9 @@ def get_user_input(
     """
     prompt_toolkit 멀티라인 에디터로 공지사항 입력.
     F1, F2, F3 키를 통해 설정(급식, 날씨, D-Day)을 토글할 수 있음.
-
-    반환값:
-        (공지사항_줄_목록, 급식_상태, 날씨_상태, DDay_상태)
-        취소 시 공지사항_줄_목록은 None 반환.
     """
     console.print(_build_guide_panel())
 
-    # 상태 저장용 dict (키 바인딩 내부에서 수정하기 위해)
     state = {
         "meal": meal_on,
         "weather": weather_on,
@@ -120,28 +115,27 @@ def get_user_input(
     }
 
     def _toolbar():
-        meal_color = "#629EE4" if state["meal"] else "#555555"
-        weather_color = "#629EE4" if state["weather"] else "#555555"
-        dday_color = "#629EE4" if state["dday"] else "#555555"
+        meal_color = "#629EE4" if state["meal"] else "#888888"
+        weather_color = "#629EE4" if state["weather"] else "#888888"
+        dday_color = "#629EE4" if state["dday"] else "#888888"
 
         meal_text = "ON" if state["meal"] else "OFF"
         weather_text = "ON" if state["weather"] else "OFF"
         dday_text = "ON" if state["dday"] else "OFF"
 
         return HTML(
-            '<style bg="#111111" fg="#444444">│</style> '
+            '<style fg="#777777">│</style> '
             "<b>Enter</b>=줄바꿈  "
-            '<style bg="#111111" fg="#444444">│</style> '
+            '<style fg="#777777">│</style> '
             "<b>Ctrl+D</b>=완료  "
-            '<style bg="#111111" fg="#444444">│</style> '
+            '<style fg="#777777">│</style> '
             "<b>Ctrl+C</b>=취소  "
-            '<style bg="#111111" fg="#444444">│</style> '
+            '<style fg="#777777">│</style> '
             f'<b>F1</b> 급식:<style fg="{meal_color}">{meal_text}</style>  '
             f'<b>F2</b> 날씨:<style fg="{weather_color}">{weather_text}</style>  '
             f'<b>F3</b> D-Day:<style fg="{dday_color}">{dday_text}</style>'
         )
 
-    # 커스텀 키 바인딩
     kb = KeyBindings()
 
     @kb.add("c-d")
@@ -188,7 +182,7 @@ def get_user_input(
     if result is None:
         return None, state["meal"], state["weather"], state["dday"]
 
-    # 빈 줄 제거 (앞뒤만, 중간 빈 줄은 구분선으로 활용 가능하므로 유지)
+    # 빈 줄 제거
     lines = result.splitlines()
     while lines and not lines[0].strip():
         lines.pop(0)
