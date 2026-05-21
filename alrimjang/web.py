@@ -10,16 +10,16 @@ import signal
 import threading
 import time
 import webbrowser
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import holidays
 from dotenv import load_dotenv, set_key
-from flask import Flask, jsonify, request, render_template, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_from_directory
 
 from .data import load_data
 from .dday import load_dday_events
-from .renderer import parse_notices, render_html, copy_png_to_clipboard
+from .renderer import copy_png_to_clipboard, parse_notices, render_html
 from .school_meal import SchoolMeal
 from .timetable import Timetable
 from .weather import Weather
@@ -42,8 +42,6 @@ _cache: dict = {}
 def _is_holiday(d: date, school_holidays: dict[str, str]) -> bool:
     return d.weekday() >= 5 or d in _KR_HOLIDAYS or d.isoformat() in school_holidays
 
-
-from datetime import timezone
 
 def _get_next_school_day(school_holidays: dict[str, str]) -> tuple[date, date]:
     # 항상 KST(UTC+9) 기준으로 현재 날짜 계산
@@ -94,10 +92,7 @@ def get_config():
             }
             if weather
             else None,
-            "dday_events": [
-                {"name": e.name, "emoji": e.emoji, "remaining": e.remaining}
-                for e in dday
-            ],
+            "dday_events": [{"name": e.name, "emoji": e.emoji, "remaining": e.remaining} for e in dday],
         }
     )
 
@@ -109,11 +104,7 @@ def preview():
     notices_text: str = body.get("notices", "")
     settings: dict = body.get("settings", _cache["settings"])
 
-    lines = (
-        [line for line in notices_text.splitlines() if line.strip()]
-        if notices_text.strip()
-        else []
-    )
+    lines = [line for line in notices_text.splitlines() if line.strip()] if notices_text.strip() else []
     notices = parse_notices(lines)
 
     meal = _cache.get("school_meal") if settings.get("meal") else None
@@ -141,9 +132,7 @@ def generate():
     settings: dict = body.get("settings", _cache["settings"])
 
     if not data_url or not data_url.startswith("data:image/png;base64,"):
-        return jsonify(
-            {"success": False, "error": "유효하지 않은 이미지 데이터입니다."}
-        ), 400
+        return jsonify({"success": False, "error": "유효하지 않은 이미지 데이터입니다."}), 400
 
     # 설정 변경 .env 저장 (필요 시)
     env_path = Path(".env")
@@ -209,9 +198,7 @@ def update_data():
     if isinstance(raw_holidays, dict):
         school_holidays = raw_holidays
     else:
-        school_holidays = {
-            h["date"]: h["name"] for h in raw_holidays if "date" in h and "name" in h
-        }
+        school_holidays = {h["date"]: h["name"] for h in raw_holidays if "date" in h and "name" in h}
 
     today, next_day = _get_next_school_day(school_holidays)
     next_dt = datetime(next_day.year, next_day.month, next_day.day)
@@ -295,9 +282,7 @@ def run_web(host: str = "127.0.0.1", port: int = 5000) -> None:
     if isinstance(raw_holidays, dict):
         school_holidays = raw_holidays
     else:
-        school_holidays = {
-            h["date"]: h["name"] for h in raw_holidays if "date" in h and "name" in h
-        }
+        school_holidays = {h["date"]: h["name"] for h in raw_holidays if "date" in h and "name" in h}
 
     today, next_day = _get_next_school_day(school_holidays)
     next_dt = datetime(next_day.year, next_day.month, next_day.day)

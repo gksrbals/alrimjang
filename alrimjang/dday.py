@@ -38,7 +38,7 @@ def load_dday_events(
     for item in raw:
         try:
             target = date.fromisoformat(item["date"])
-        except KeyError, ValueError:
+        except (KeyError, ValueError):
             continue
 
         remaining = (target - ref_date).days
