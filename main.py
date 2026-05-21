@@ -27,6 +27,7 @@ from alrimjang.cli import (
     print_progress_header,
 )
 from alrimjang.renderer import render_and_export
+from alrimjang.data import load_data
 
 load_dotenv()
 console = Console(highlight=False)
@@ -35,16 +36,7 @@ console = Console(highlight=False)
 _KR_HOLIDAYS = holidays.KR()
 
 
-def _load_school_holidays(path: str = "school_holidays.json") -> dict[str, str]:
-    """학교 자체 휴일 파일 로드. 없으면 빈 dict."""
-    p = Path(path)
-    if not p.exists():
-        return {}
-    try:
-        with open(p, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {}
+
 
 
 def _is_holiday(d: date, school_holidays: dict[str, str]) -> bool:
@@ -120,7 +112,8 @@ def main() -> None:
     #  Phase 1: 입력
     # ══════════════════════════════════════════════════
 
-    school_holidays = _load_school_holidays()
+    data = load_data()
+    school_holidays = data.get("school_holidays", {})
     today, next_day = get_next_school_day(school_holidays)
     next_datetime = datetime(next_day.year, next_day.month, next_day.day)
 
@@ -162,7 +155,7 @@ def main() -> None:
     _print_step("공지사항", f"{len(raw_notices)}줄")
 
     # 시간표
-    timetable_obj = Timetable.load_timetable("timetable.json")
+    timetable_obj = Timetable.load_timetable(data)
     timetable = timetable_obj.get_timetable(next_datetime)
     _print_step("시간표", f"{len(timetable)}교시")
 
@@ -193,7 +186,7 @@ def main() -> None:
     # D-Day
     dday_events: list[DdayEvent] = []
     if dday_enabled:
-        dday_events = load_dday_events(next_datetime)
+        dday_events = load_dday_events(next_datetime, data)
         if dday_events:
             _print_step("D-Day", f"{len(dday_events)}개")
     else:

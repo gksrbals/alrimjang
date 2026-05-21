@@ -20,34 +20,19 @@ class DdayEvent:
 
 def load_dday_events(
     reference: datetime,
-    path: str = "dday.json",
+    data: dict,
 ) -> list[DdayEvent]:
     """
-    dday.json에서 이벤트를 로드하고 남은 일수를 계산.
-
-    JSON 형식 예시::
-
-        [
-            {"name": "중간고사", "date": "2026-06-15", "emoji": "📝"},
-            {"name": "여름방학", "date": "2026-07-18", "emoji": "🏖️"}
-        ]
+    data dict에서 이벤트를 로드하고 남은 일수를 계산.
 
     Args:
         reference: 기준일 (다음 등교일)
-        path: JSON 파일 경로
+        data: 알림장 데이터 딕셔너리
 
     Returns:
         남은 일수 기준 오름차순 정렬된 이벤트 목록 (지난 이벤트 제외)
     """
-    p = Path(path)
-    if not p.exists():
-        return []
-
-    try:
-        with open(p, "r", encoding="utf-8") as f:
-            raw = json.load(f)
-    except json.JSONDecodeError, Exception:
-        return []
+    raw = data.get("dday", [])
 
     ref_date = reference.date() if isinstance(reference, datetime) else reference
 
@@ -55,7 +40,7 @@ def load_dday_events(
     for item in raw:
         try:
             target = date.fromisoformat(item["date"])
-        except KeyError, ValueError:
+        except (KeyError, ValueError):
             continue
 
         remaining = (target - ref_date).days

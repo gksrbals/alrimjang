@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Alrimjang Data",
+    "type": "object",
+    "properties": {
+        "dday": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "date": {"type": "string", "format": "date"},
+                    "emoji": {"type": "string"}
+                },
+                "required": ["name", "date"]
+            }
+        },
+        "school_holidays": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "timetable": {
+            "type": "object",
+            "properties": {
+                "monday": {"type": "array", "items": {"type": "string"}},
+                "tuesday": {"type": "array", "items": {"type": "string"}},
+                "wednesday": {"type": "array", "items": {"type": "string"}},
+                "thursday": {"type": "array", "items": {"type": "string"}},
+                "friday": {"type": "array", "items": {"type": "string"}},
+                "overrides": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    }
+                }
+            },
+            "required": ["monday", "tuesday", "wednesday", "thursday", "friday"]
+        }
+    },
+    "required": ["dday", "school_holidays", "timetable"]
+}

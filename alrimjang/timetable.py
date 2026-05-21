@@ -33,9 +33,14 @@ class Timetable:
         return getattr(self, weekday)
 
     @staticmethod
-    def load_timetable(path: str) -> "Timetable":
-        """JSON 파일에서 시간표 로드. overrides 없으면 빈 dict로 초기화."""
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        overrides = data.pop("overrides", {})
-        return Timetable(**data, overrides=overrides)
+    def load_timetable(data: dict) -> "Timetable":
+        """JSON 데이터에서 시간표 로드. overrides 없으면 빈 dict로 초기화."""
+        timetable_data = data.get("timetable", {}).copy()
+        overrides = timetable_data.pop("overrides", {})
+        
+        # 누락된 요일 기본값 추가
+        for day in ["monday", "tuesday", "wednesday", "thursday", "friday"]:
+            if day not in timetable_data:
+                timetable_data[day] = []
+                
+        return Timetable(**timetable_data, overrides=overrides)
