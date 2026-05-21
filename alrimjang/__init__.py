@@ -1,7 +1,7 @@
-from .timetable import Timetable
-from .school_meal import SchoolMeal
-from .weather import Weather
 from .dday import DdayEvent
+from .school_meal import SchoolMeal
+from .timetable import Timetable
+from .weather import Weather
 
 __version__ = "0.1.0"
 __all__ = [

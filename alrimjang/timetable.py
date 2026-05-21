@@ -1,5 +1,5 @@
-from datetime import datetime
 from dataclasses import dataclass, field
+from datetime import datetime
 
 
 @dataclass(frozen=True)
@@ -23,23 +23,21 @@ class Timetable:
         """
         date_str = day.strftime("%Y-%m-%d")
         weekday = day.strftime("%A").lower()  # 'monday' ~ 'friday'
-        
+
         if not hasattr(self, weekday):
-            raise ValueError(
-                f"시간표가 없는 요일입니다: {day.strftime('%A')} ({date_str})"
-            )
-            
+            raise ValueError(f"시간표가 없는 요일입니다: {day.strftime('%A')} ({date_str})")
+
         base_tt = getattr(self, weekday).copy()
-        
+
         if date_str in self.overrides:
             override_rules = self.overrides[date_str]
             # 호환성 처리: 이전 배열 형태의 override가 남아있을 경우
             if isinstance(override_rules, list):
                 return override_rules
-            
+
             for period_str, subject in override_rules.items():
                 try:
-                    period_idx = int(period_str) - 1 # 1교시 -> index 0
+                    period_idx = int(period_str) - 1  # 1교시 -> index 0
                     if period_idx < 0:
                         continue
                     # 배열 길이가 부족하면 빈 문자열로 확장
@@ -48,11 +46,11 @@ class Timetable:
                     base_tt[period_idx] = subject
                 except ValueError:
                     pass
-                    
+
         # 빈 문자열을 뒤에서부터 제거 (trim)
         while base_tt and not base_tt[-1]:
             base_tt.pop()
-            
+
         return base_tt
 
     @staticmethod
@@ -61,9 +59,7 @@ class Timetable:
         timetable_data = data.get("timetable", {}).copy()
         raw_overrides = timetable_data.pop("overrides", {})
         if isinstance(raw_overrides, list):
-            overrides = {
-                o["date"]: o.get("subjects", {}) for o in raw_overrides if "date" in o
-            }
+            overrides = {o["date"]: o.get("subjects", {}) for o in raw_overrides if "date" in o}
         else:
             overrides = raw_overrides
 

@@ -4,12 +4,12 @@ from datetime import datetime
 from pathlib import Path
 
 import win32clipboard
-from PIL import Image
 from jinja2 import Environment, FileSystemLoader
+from PIL import Image
 
+from .dday import DdayEvent
 from .school_meal import SchoolMeal
 from .weather import Weather
-from .dday import DdayEvent
 
 # 템플릿 디렉토리
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
