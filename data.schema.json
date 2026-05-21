@@ -12,13 +12,20 @@
                     "date": {"type": "string", "format": "date"},
                     "emoji": {"type": "string"}
                 },
-                "required": ["name", "date"]
+                "required": ["name", "date"],
+                "additionalProperties": false
             }
         },
         "school_holidays": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "string"
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "date": {"type": "string", "format": "date", "description": "휴일 날짜 (YYYY-MM-DD)"},
+                    "name": {"type": "string", "description": "휴일 이름 (예: 개교기념일)"}
+                },
+                "required": ["date", "name"],
+                "additionalProperties": false
             }
         },
         "timetable": {
@@ -30,15 +37,22 @@
                 "thursday": {"type": "array", "items": {"type": "string"}},
                 "friday": {"type": "array", "items": {"type": "string"}},
                 "overrides": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {"type": "string"}
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "date": {"type": "string", "format": "date", "description": "변경된 날짜 (YYYY-MM-DD)"},
+                            "subjects": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "해당 날짜의 시간표"
+                            }
+                        },
+                        "required": ["date", "subjects"],
+                        "additionalProperties": false
                     }
                 }
-            },
-            "required": ["monday", "tuesday", "wednesday", "thursday", "friday"]
+            }
         }
-    },
-    "required": ["dday", "school_holidays", "timetable"]
+    }
 }

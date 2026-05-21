@@ -10,11 +10,11 @@
 
 | 기능 | 데이터 소스 | 설정 |
 |------|-----------|------|
-| 🗓️ 시간표 | `timetable.json` (로컬) | — |
+| 🗓️ 시간표 | `data.json` (로컬) | — |
 | 📢 공지사항 | 직접 입력 (마크다운 지원) | — |
-| 🍱 급식 | NEIS API | `SCHOOL_MEAL_IGNORE` |
-| ☀️ 날씨 | Open-Meteo API (등교 09시 기준) | `WEATHER_IGNORE` |
-| 🎯 D-Day | `dday.json` (로컬) | `DDAY_IGNORE` |
+| 🍱 급식 | NEIS API | `SCHOOL_MEAL_ENABLED` |
+| ☀️ 날씨 | Open-Meteo API (등교 09시 기준) | `WEATHER_ENABLED` |
+| 🎯 D-Day | `data.json` (로컬) | `DDAY_ENABLED` |
 
 ---
 
@@ -106,64 +106,37 @@ DDAY_ENABLED=True
 
 ---
 
-### 시간표 (`timetable.json`)
+### 데이터 설정 (`data.json`)
+
+기본 제공되는 `data.example.json`을 복사하여 `data.json` 파일을 생성한 후 설정합니다. 이 파일은 Git 추적에서 제외되므로 자유롭게 수정하셔도 됩니다.
 
 ```json
 {
-    "monday":    ["독서", "생과", "이동D", "이동F", "영독작", "확통"],
-    "tuesday":   ["영독작", "심국", "이동E", "이동D", "확통", "독서"],
-    "wednesday": ["확통", "영독작", "이동E", "이동F", "독서", "생과"],
-    "thursday":  ["이동D", "이동E", "독서", "심국", "확통", "생과"],
-    "friday":    ["영독작", "독서", "이동D", "이동E", "생과", "심국"]
-}
-```
-
-#### 특정 날짜 시간표 변동 (시험 등)
-
-```json
-{
-    "monday": ["..."],
-    "friday": ["..."],
-
-    "overrides": {
-        "2026-06-10": ["국어", "수학", "영어", "자습", "자습", "자습"],
-        "2026-06-11": ["과학", "사회", "도덕", "자습", "자습"]
+    "$schema": "./data.schema.json",
+    "dday": [
+        {"name": "기말고사", "date": "2026-07-01", "emoji": "📝"},
+        {"name": "여름방학", "date": "2026-07-18", "emoji": "🏖️"}
+    ],
+    "school_holidays": [
+        {"date": "2026-05-28", "name": "개교기념일"},
+        {"date": "2026-06-01", "name": "재량휴업일"}
+    ],
+    "timetable": {
+        "monday":    ["독서", "생과", "이동D", "이동F", "영독작", "확통"],
+        "tuesday":   ["영독작", "이동H", "운건", "진로", "이동F", "확통", "독서"],
+        "wednesday": ["이동I", "이동E", "심국", "이동H", "창체", "창체"],
+        "thursday":  ["이동I", "영독작", "심국", "확통", "운건", "독서", "이동D"],
+        "friday":    ["영독작", "독서", "이동D", "이동E", "생과", "심국"],
+        "overrides": [
+            {"date": "2026-06-10", "subjects": ["국어", "수학", "영어", "자습", "자습", "자습"]}
+        ]
     }
 }
 ```
 
-> **주의**: `overrides` 앞 줄에 쉼표(`,`) 추가 필수
-
----
-
-### D-Day (`dday.json`)
-
-```json
-[
-    {"name": "기말고사", "date": "2026-07-01", "emoji": "📝"},
-    {"name": "여름방학", "date": "2026-07-18", "emoji": "🏖️"}
-]
-```
-
-- 지난 이벤트는 자동으로 숨겨집니다
-- 남은 일수에 따라 색상 변경: 🔴 3일 이하 / 🟡 7일 이하 / 🔵 8일 이상
-
----
-
-### 학교 휴일 (`school_holidays.json`)
-
-국가 공휴일(설날, 추석 등)은 **자동 처리**됩니다.
-
-개교기념일, 재량휴업일 등 학교 자체 휴일만 등록하세요:
-
-```json
-{
-    "2026-05-28": "개교기념일",
-    "2026-06-01": "재량휴업일"
-}
-```
-
-등록된 날짜는 자동으로 건너뛰고 다음 등교일로 알림장을 작성합니다.
+- **dday**: 지난 이벤트는 자동으로 숨겨지며, 남은 일수에 따라 색상이 자동 변경됩니다. (🔴 3일 이하 / 🟡 7일 이하 / 🔵 8일 이상)
+- **school_holidays**: 국가 공휴일은 자동으로 처리되므로 등록할 필요가 없습니다. 개교기념일 등 학교 자체 휴일만 `YYYY-MM-DD` 형식으로 등록하세요. 등록된 날짜는 건너뛰고 다음 등교일 기준으로 알림장을 작성합니다.
+- **timetable**: 기본 요일별 시간표를 설정합니다. 특정 날짜에 시간표가 변경(예: 시험)되는 경우 `overrides`에 날짜(`YYYY-MM-DD`)를 키로 하여 시간표를 덮어씌울 수 있습니다.
 
 ---
 
@@ -179,20 +152,20 @@ DDAY_ENABLED=True
 ```
 alrimjang/
 ├── main.py                  # 진입점 (2단계 CLI 흐름)
-├── timetable.json           # 시간표 데이터
-├── dday.json                # D-Day 이벤트
-├── school_holidays.json     # 학교 자체 휴일
+├── data.example.json        # 데이터 템플릿
+├── data.schema.json         # JSON 스키마
 ├── .env                     # 환경변수 설정
 ├── output/                  # 생성된 이미지
 │   └── 20260522.png
 └── alrimjang/
     ├── __init__.py
     ├── cli.py               # CLI UI (rich + prompt_toolkit)
+    ├── data.py              # 데이터 로더 (data.json 파싱)
     ├── renderer.py          # HTML→PNG 렌더링, 크롭, 라운드 마스크
     ├── school_meal.py       # NEIS 급식 API
     ├── weather.py           # Open-Meteo 날씨 API
-    ├── timetable.py         # 시간표 로더
-    ├── dday.py              # D-Day 카운트다운
+    ├── timetable.py         # 시간표 모델
+    ├── dday.py              # D-Day 계산 로직
     └── templates/
         └── notice.html.j2   # Jinja2 HTML 템플릿
 ```

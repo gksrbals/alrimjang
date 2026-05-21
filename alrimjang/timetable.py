@@ -36,7 +36,11 @@ class Timetable:
     def load_timetable(data: dict) -> "Timetable":
         """JSON 데이터에서 시간표 로드. overrides 없으면 빈 dict로 초기화."""
         timetable_data = data.get("timetable", {}).copy()
-        overrides = timetable_data.pop("overrides", {})
+        raw_overrides = timetable_data.pop("overrides", [])
+        if isinstance(raw_overrides, dict):
+            overrides = raw_overrides
+        else:
+            overrides = {o["date"]: o.get("subjects", []) for o in raw_overrides if "date" in o}
         
         # 누락된 요일 기본값 추가
         for day in ["monday", "tuesday", "wednesday", "thursday", "friday"]:

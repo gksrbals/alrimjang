@@ -113,7 +113,12 @@ def main() -> None:
     # ══════════════════════════════════════════════════
 
     data = load_data()
-    school_holidays = data.get("school_holidays", {})
+    raw_holidays = data.get("school_holidays", [])
+    if isinstance(raw_holidays, dict):
+        school_holidays = raw_holidays
+    else:
+        school_holidays = {h["date"]: h["name"] for h in raw_holidays if "date" in h and "name" in h}
+        
     today, next_day = get_next_school_day(school_holidays)
     next_datetime = datetime(next_day.year, next_day.month, next_day.day)
 
