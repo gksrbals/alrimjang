@@ -168,7 +168,7 @@
     .loading-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
 
     /* Emoji Picker */
-    .emoji-picker-popup { position: absolute; z-index: 300; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 8px; display: none; }
+    .emoji-picker-popup { position: fixed; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 8px; display: none; }
     .emoji-picker-popup.show { display: block; }
     emoji-picker { --background: var(--bg-surface); --border-color: var(--border); --input-border-color: var(--border); --category-font-color: var(--text); --indicator-color: var(--accent); }
     
@@ -474,6 +474,14 @@ document.addEventListener('alpine:init', () => {
           document.body.style.cursor = '';
         }
       });
+      
+      // Close emoji picker on drawer scroll
+      const drawerBody = document.getElementById('drawer-body-scroll');
+      if (drawerBody) {
+        drawerBody.addEventListener('scroll', () => {
+          if (this.emojiPickerTargetIndex !== null) this.emojiPickerTargetIndex = null;
+        });
+      }
     },
 
     async fetchConfig() {
@@ -670,9 +678,20 @@ document.addEventListener('alpine:init', () => {
     openEmojiPicker(e, index) {
       this.emojiPickerTargetIndex = index;
       const rect = e.currentTarget.getBoundingClientRect();
-      const popup = document.getElementById('emoji-popup');
-      popup.style.left = `${Math.max(10, rect.left - 300)}px`;
-      popup.style.top = `${rect.bottom + 5}px`;
+      // 강제로 렌더링을 기다린 후 DOM 조작 (Alpine.js show 클래스 반응 이후)
+      this.$nextTick(() => {
+        const popup = document.getElementById('emoji-popup');
+        
+        let left = rect.left;
+        let top = rect.bottom + 5;
+        
+        // Picker width is ~350px, height ~400px
+        if (left + 360 > window.innerWidth) left = window.innerWidth - 370;
+        if (top + 410 > window.innerHeight) top = rect.top - 415; // show above
+        
+        popup.style.left = `${Math.max(10, left)}px`;
+        popup.style.top = `${Math.max(10, top)}px`;
+      });
     },
 
     // ── Utils ──
