@@ -19,7 +19,7 @@ from dotenv import load_dotenv, set_key
 from flask import Flask, jsonify, request, render_template, send_from_directory
 
 from .data import load_data
-from .dday import DdayEvent, load_dday_events
+from .dday import load_dday_events
 from .renderer import parse_notices, render_html, render_and_export
 from .school_meal import SchoolMeal
 from .timetable import Timetable
@@ -41,11 +41,7 @@ _cache: dict = {}
 
 
 def _is_holiday(d: date, school_holidays: dict[str, str]) -> bool:
-    return (
-        d.weekday() >= 5
-        or d in _KR_HOLIDAYS
-        or d.isoformat() in school_holidays
-    )
+    return d.weekday() >= 5 or d in _KR_HOLIDAYS or d.isoformat() in school_holidays
 
 
 def _get_next_school_day(school_holidays: dict[str, str]) -> tuple[date, date]:
@@ -110,7 +106,11 @@ def preview():
     notices_text: str = body.get("notices", "")
     settings: dict = body.get("settings", _cache["settings"])
 
-    lines = [l for l in notices_text.splitlines() if l.strip()] if notices_text.strip() else []
+    lines = (
+        [line for line in notices_text.splitlines() if line.strip()]
+        if notices_text.strip()
+        else []
+    )
     notices = parse_notices(lines)
 
     meal = _cache.get("school_meal") if settings.get("meal") else None
@@ -217,9 +217,7 @@ def update_data():
         school_holidays = raw_holidays
     else:
         school_holidays = {
-            h["date"]: h["name"]
-            for h in raw_holidays
-            if "date" in h and "name" in h
+            h["date"]: h["name"] for h in raw_holidays if "date" in h and "name" in h
         }
 
     today, next_day = _get_next_school_day(school_holidays)
@@ -259,9 +257,11 @@ def update_data():
 @app.route("/api/shutdown", methods=["POST"])
 def shutdown():
     """서버 종료 요청 처리."""
+
     def kill_server():
         time.sleep(0.5)
         os.kill(os.getpid(), signal.SIGINT)
+
     threading.Thread(target=kill_server, daemon=True).start()
     return jsonify({"success": True})
 
@@ -303,9 +303,7 @@ def run_web(host: str = "127.0.0.1", port: int = 5000) -> None:
         school_holidays = raw_holidays
     else:
         school_holidays = {
-            h["date"]: h["name"]
-            for h in raw_holidays
-            if "date" in h and "name" in h
+            h["date"]: h["name"] for h in raw_holidays if "date" in h and "name" in h
         }
 
     today, next_day = _get_next_school_day(school_holidays)
@@ -313,7 +311,10 @@ def run_web(host: str = "127.0.0.1", port: int = 5000) -> None:
     today_dt = datetime(today.year, today.month, today.day)
     weekday_kr = ["월", "화", "수", "목", "금", "토", "일"]
 
-    _step("날짜 계산", f"{next_day.month}월 {next_day.day}일 {weekday_kr[next_day.weekday()]}요일")
+    _step(
+        "날짜 계산",
+        f"{next_day.month}월 {next_day.day}일 {weekday_kr[next_day.weekday()]}요일",
+    )
 
     # ── 2. 시간표 ──
     timetable_obj = Timetable.load_timetable(data)
@@ -376,7 +377,7 @@ def run_web(host: str = "127.0.0.1", port: int = 5000) -> None:
     console.print()
     console.print("  [green]✅ 준비 완료![/green]")
     console.print(f"  [#AAAAAA]http://{host}:{port}[/#AAAAAA]")
-    console.print(f"  [#AAAAAA]Ctrl+C로 종료[/#AAAAAA]\n")
+    console.print("  [#AAAAAA]Ctrl+C로 종료[/#AAAAAA]\n")
 
     # 브라우저 열기 (서버 바인딩 후 살짝 대기)
     def _open_browser():
@@ -388,6 +389,7 @@ def run_web(host: str = "127.0.0.1", port: int = 5000) -> None:
     # Flask/werkzeug 로그 및 배너 억제 (터미널 깔끔하게)
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
     import flask.cli
+
     flask.cli.show_server_banner = lambda *_: None
 
     app.run(host=host, port=port, debug=False)

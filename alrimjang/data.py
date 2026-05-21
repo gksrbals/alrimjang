@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
+
 def load_data() -> Dict[str, Any]:
     """data.json을 우선 로드하고, 없으면 data.example.json을 로드합니다."""
     for p in ["data.json", "data.example.json"]:

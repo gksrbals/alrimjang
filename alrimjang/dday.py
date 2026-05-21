@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from datetime import date, datetime
-from pathlib import Path
 
 
 @dataclass
@@ -40,7 +38,7 @@ def load_dday_events(
     for item in raw:
         try:
             target = date.fromisoformat(item["date"])
-        except (KeyError, ValueError):
+        except KeyError, ValueError:
             continue
 
         remaining = (target - ref_date).days
