@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📋 알림장 웹 에디터</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Emoji Picker -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.21.3/index.js"></script>
+  <!-- html-to-image -->
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+  <!-- SortableJS -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
   <style>
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
@@ -27,195 +36,95 @@
       --green:      #4CAF50;
       --green-glow: rgba(76, 175, 80, 0.15);
       --red:        #FF6B6B;
-      --orange:     #FFAA33;
       --radius:     10px;
       --radius-lg:  14px;
       --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    body {
-      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      background: var(--bg-body);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+    body { font-family: 'Pretendard', sans-serif; background: var(--bg-body); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
     /* ── Layout ── */
-    .app {
-      max-width: 1600px;
-      margin: 0 auto;
-      padding: 24px 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      height: 100vh;
-    }
+    .app { max-width: 1600px; margin: 0 auto; padding: 24px 32px; display: flex; flex-direction: column; gap: 20px; height: 100vh; }
 
     /* ── Header ── */
-    .header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 20px; background: var(--bg-surface);
-      border: 1px solid var(--border-dim); border-radius: var(--radius-lg); flex-shrink: 0;
-    }
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg-surface); border: 1px solid var(--border-dim); border-radius: var(--radius-lg); flex-shrink: 0; }
     .header-left { display: flex; align-items: center; gap: 14px; }
     .header-icon { font-size: 28px; line-height: 1; }
-    .header-title { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
-    
+    .header-title { font-size: 20px; font-weight: 700; color: #fff; }
     .header-right { display: flex; align-items: center; gap: 10px; }
     .header-date { display: flex; align-items: center; gap: 10px; font-size: 14px; margin-right: 14px; }
     .header-today { color: var(--text-dim); }
     .header-arrow { color: var(--text-muted); font-size: 16px; }
     .header-next  { color: var(--accent); font-weight: 600; }
 
-    .btn-header {
-      background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: 8px;
-      padding: 8px 12px; font-size: 13px; color: var(--text-dim);
-      font-family: 'Pretendard', sans-serif; cursor: pointer; transition: all var(--transition);
-      display: flex; align-items: center; gap: 6px;
-    }
+    .btn-header { background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--text-dim); font-family: 'Pretendard', sans-serif; cursor: pointer; transition: all var(--transition); display: flex; align-items: center; gap: 6px; }
     .btn-header:hover { border-color: var(--border); color: var(--text); }
     .btn-header.primary { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
 
     /* ── Main Split ── */
-    .main-split {
-      display: flex; flex: 1; min-height: 0; gap: 12px;
-    }
-
-    /* ── Splitter ── */
-    .splitter {
-      width: 8px; flex-shrink: 0; background: transparent; cursor: col-resize;
-      position: relative; display: flex; justify-content: center; align-items: center;
-    }
-    .splitter::after {
-      content: ''; position: absolute; width: 2px; height: 30px;
-      background: var(--border); border-radius: 2px; transition: background var(--transition);
-    }
+    .main-split { display: flex; flex: 1; min-height: 0; gap: 12px; }
+    .splitter { width: 8px; flex-shrink: 0; background: transparent; cursor: col-resize; position: relative; display: flex; justify-content: center; align-items: center; }
+    .splitter::after { content: ''; position: absolute; width: 2px; height: 30px; background: var(--border); border-radius: 2px; transition: background var(--transition); }
     .splitter:hover::after, .splitter.active::after { background: var(--accent); }
 
     /* ── Panel ── */
-    .panel {
-      background: var(--bg-surface); border: 1px solid var(--border-dim);
-      border-radius: var(--radius-lg); display: flex; flex-direction: column;
-      overflow: hidden; min-height: 0;
-    }
-    
-    .panel-left { width: 50%; min-width: 300px; max-width: 80vw; flex: none; }
+    .panel { background: var(--bg-surface); border: 1px solid var(--border-dim); border-radius: var(--radius-lg); display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+    .panel-left { flex: none; min-width: 300px; max-width: 80vw; }
     .panel-right { flex: 1; min-width: 300px; position: relative; }
-
-    .panel-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 18px; border-bottom: 1px solid var(--border-dim); flex-shrink: 0;
-    }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border-dim); flex-shrink: 0; }
     .panel-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: #fff; }
-    .panel-title-icon { font-size: 18px; }
     .panel-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 
     /* ── Editor ── */
     .editor-wrapper { flex: 1; position: relative; display: flex; min-height: 0; }
-    .line-numbers {
-      width: 42px; padding: 16px 0; text-align: right;
-      font-family: 'Pretendard', monospace; font-size: 13px; line-height: 1.7;
-      color: var(--text-muted); background: var(--bg-card);
-      border-right: 1px solid var(--border-dim); user-select: none; overflow: hidden; flex-shrink: 0;
-    }
-    .line-numbers div { padding-right: 10px; height: calc(13px * 1.7); }
-    .editor-textarea {
-      flex: 1; resize: none; border: none; outline: none;
-      background: var(--bg-card); color: var(--text);
-      font-family: 'Pretendard', sans-serif; font-size: 14px; line-height: 1.7;
-      padding: 16px; tab-size: 2; min-height: 0;
-    }
+    .line-numbers { width: 42px; padding: 16px 0; text-align: right; font-family: 'Pretendard', monospace; font-size: 14px; line-height: 1.7; color: var(--text-muted); background: var(--bg-card); border-right: 1px solid var(--border-dim); user-select: none; overflow: hidden; flex-shrink: 0; }
+    .line-numbers div { padding-right: 10px; height: calc(14px * 1.7); }
+    .editor-textarea { flex: 1; resize: none; border: none; outline: none; background: var(--bg-card); color: var(--text); font-family: 'Pretendard', sans-serif; font-size: 14px; line-height: 1.7; padding: 16px; min-height: 0; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
     .editor-textarea::placeholder { color: var(--text-muted); }
     .editor-textarea:focus { background: #16161e; }
-
-    /* ── Editor Toolbar ── */
-    .editor-toolbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 14px; border-top: 1px solid var(--border-dim);
-      background: var(--bg-surface); flex-shrink: 0;
-    }
+    .editor-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-top: 1px solid var(--border-dim); background: var(--bg-surface); flex-shrink: 0; }
     .editor-hints { display: flex; gap: 14px; font-size: 12px; color: var(--text-muted); }
-    .editor-hint kbd {
-      display: inline-block; background: var(--bg-hover); border: 1px solid var(--border);
-      border-radius: 4px; padding: 1px 5px; font-family: 'Pretendard', monospace;
-      font-size: 11px; color: var(--text-dim); margin-right: 3px;
-    }
-    .line-count { font-size: 12px; color: var(--text-muted); }
+    .editor-hint kbd { display: inline-block; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-family: 'Pretendard', monospace; font-size: 11px; color: var(--text-dim); margin-right: 3px; }
 
-    /* ── Generate Button (Now inside left toolbar) ── */
-    .btn-generate {
-      padding: 8px 16px; background: linear-gradient(135deg, var(--accent), #4A8BD4);
-      border: none; border-radius: 8px; color: #fff;
-      font-family: 'Pretendard', sans-serif; font-size: 14px; font-weight: 700;
-      cursor: pointer; transition: all var(--transition);
-      display: flex; align-items: center; gap: 8px;
-    }
-    .btn-generate:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 15px rgba(98,158,228,0.3); }
-    .btn-generate:active { transform: translateY(0); filter: brightness(0.95); }
-    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-    .btn-generate .spinner {
-      display: none; width: 14px; height: 14px;
-      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
-      border-radius: 50%; animation: spin 0.6s linear infinite;
-    }
-    .btn-generate.loading .spinner { display: inline-block; }
+    .btn-generate { padding: 8px 16px; background: linear-gradient(135deg, var(--accent), #4A8BD4); border: none; border-radius: 8px; color: #fff; font-family: 'Pretendard', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all var(--transition); display: flex; align-items: center; gap: 8px; }
+    .btn-generate:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── Preview ── */
-    .preview-container {
-      flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px;
-      background: radial-gradient(circle at 20% 30%, rgba(98,158,228,0.03), transparent 60%), var(--bg-card);
-    }
-    .preview-scaler { position: relative; overflow: hidden; margin: 0 auto; display: none; }
-    .preview-frame { position: absolute; top: 0; left: 0; width: 800px; border: none; transform-origin: top left; display: block; }
-    .preview-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 14px; gap: 8px; }
-    .preview-empty-icon { font-size: 36px; opacity: 0.4; }
+    .preview-container { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px; background: radial-gradient(circle at 20% 30%, rgba(98,158,228,0.03), transparent 60%), var(--bg-card); display: flex; justify-content: center; }
+    .preview-scaler { position: relative; overflow: hidden; margin: 0 auto; }
+    .preview-frame { position: absolute; top: 0; left: 0; width: 800px; border: none; transform-origin: top left; display: block; pointer-events: none; }
+    .preview-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 14px; gap: 8px; margin: auto; }
 
-    /* ── Result ── */
-    .result-bar { display: none; align-items: center; justify-content: space-between; padding: 12px 18px; border-top: 1px solid var(--border-dim); background: var(--green-glow); flex-shrink: 0; }
-    .result-bar.show { display: flex; }
-    .result-info { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--green); font-weight: 500; }
-
-    /* ── Modal Overlay ── */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-      z-index: 100; opacity: 0; visibility: hidden; transition: all 0.2s ease;
-      display: flex; align-items: center; justify-content: center;
-    }
+    /* ── Modals & Drawers ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
     .modal-overlay.open { opacity: 1; visibility: visible; }
-    
-    .modal {
-      background: var(--bg-surface); border: 1px solid var(--border);
-      border-radius: var(--radius-lg); width: 400px;
-      transform: translateY(20px); transition: transform 0.2s ease;
-      overflow: hidden;
-    }
+    .modal { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 400px; transform: translateY(20px); transition: transform 0.2s ease; overflow: hidden; }
     .modal-overlay.open .modal { transform: translateY(0); }
-    
-    .modal-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 20px; border-bottom: 1px solid var(--border-dim);
-    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-dim); }
     .modal-title { font-size: 16px; font-weight: 600; color: #fff; }
-    .modal-close {
-      background: none; border: none; color: var(--text-dim); font-size: 18px;
-      cursor: pointer; transition: color var(--transition);
-    }
+    .modal-close { background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; transition: color var(--transition); }
     .modal-close:hover { color: var(--text); }
-    
     .modal-body { padding: 20px; }
 
-    /* ── Settings Items (in modal) ── */
-    .setting-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border-dim);
-      border-radius: 8px; margin-bottom: 10px;
-    }
-    .setting-item:last-child { margin-bottom: 0; }
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+    .drawer-overlay.open { opacity: 1; visibility: visible; }
+    .drawer { position: fixed; top: 0; right: 0; width: 850px; max-width: 90vw; height: 100vh; background: var(--bg-surface); border-left: 1px solid var(--border); z-index: 201; transform: translateX(100%); transition: transform 0.3s ease; display: flex; flex-direction: column; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-dim); flex-shrink: 0; }
+    .drawer-close { background: none; border: none; color: var(--text-dim); font-size: 20px; cursor: pointer; transition: color var(--transition); padding: 4px; }
+    .drawer-close:hover { color: var(--text); }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 16px 22px; min-height: 0; }
+    .drawer-body .data-section { margin-bottom: 20px; }
+    .drawer-body .data-section:last-child { margin-bottom: 0; }
+    .drawer-footer { display: flex; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border-dim); flex-shrink: 0; }
+
+    /* ── Form Controls ── */
+    .setting-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: 8px; margin-bottom: 10px; }
     .setting-label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); }
     
-    /* Toggle */
     .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
     .toggle input { opacity: 0; width: 0; height: 0; }
     .toggle-track { position: absolute; inset: 0; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 12px; transition: all var(--transition); }
@@ -223,145 +132,52 @@
     .toggle input:checked ~ .toggle-track { background: var(--accent-glow); border-color: var(--accent); }
     .toggle input:checked ~ .toggle-thumb { left: 21px; background: var(--accent); }
 
-    /* Guide Table (in modal) */
-    .guide-table { width: 100%; font-size: 13px; border-collapse: collapse; }
-    .guide-table tr { border-bottom: 1px solid var(--border-dim); }
-    .guide-table tr:last-child { border-bottom: none; }
-    .guide-table td { padding: 12px 8px; }
-    .guide-table td:first-child { color: var(--accent); font-family: 'Pretendard', monospace; width: 130px; }
-    .guide-table td:last-child { color: var(--text-dim); }
-
-    /* ════════ Data Drawer ════════ */
-    .drawer-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-      z-index: 200; opacity: 0; visibility: hidden; transition: all 0.3s ease;
-    }
-    .drawer-overlay.open { opacity: 1; visibility: visible; }
-
-    .drawer {
-      position: fixed; top: 0; right: 0; width: 540px; height: 100vh;
-      background: var(--bg-surface); border-left: 1px solid var(--border);
-      z-index: 201; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-      display: flex; flex-direction: column;
-    }
-    .drawer.open { transform: translateX(0); }
-
-    .drawer-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 22px; border-bottom: 1px solid var(--border-dim); flex-shrink: 0;
-    }
-    .drawer-header h2 { font-size: 17px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-    .drawer-close {
-      background: none; border: 1px solid var(--border-dim); border-radius: 6px;
-      color: var(--text-dim); font-size: 18px; width: 30px; height: 30px;
-      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition);
-    }
-    .drawer-close:hover { border-color: var(--red); color: var(--red); }
-
-    .drawer-body { flex: 1; overflow-y: auto; padding: 16px 22px; display: flex; flex-direction: column; gap: 20px; }
-
-    .drawer-footer { display: flex; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border-dim); flex-shrink: 0; }
-
-    .data-section { background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: var(--radius); overflow: hidden; }
-    .data-section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--border-dim); }
-    .data-section-title { font-size: 13px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 6px; }
+    .data-section { background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: var(--radius); overflow: hidden; flex-shrink: 0; }
+    .data-section-header { padding: 12px 14px; border-bottom: 1px solid var(--border-dim); font-size: 13px; font-weight: 600; color: #fff; }
     .data-section-body { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
-    .data-section-empty { font-size: 12px; color: var(--text-muted); padding: 6px 0; text-align: center; }
-
-    .data-row {
-      display: flex; align-items: center; gap: 6px; padding: 5px 8px; background: var(--bg-input);
-      border: 1px solid var(--border-dim); border-radius: 6px; transition: border-color var(--transition);
-    }
-    .data-row:hover { border-color: var(--border); }
-
-    .data-input {
-      flex: 1; background: none; border: none; outline: none; color: var(--text);
-      font-family: 'Pretendard', sans-serif; font-size: 12px; padding: 4px 6px;
-    }
-    .data-input::placeholder { color: var(--text-muted); }
+    
+    .data-row { display: flex; align-items: center; gap: 6px; padding: 5px 8px; background: var(--bg-input); border: 1px solid var(--border-dim); border-radius: 6px; }
+    .data-input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'Pretendard', sans-serif; font-size: 12px; padding: 4px 6px; }
     .data-input-date { width: 130px; flex: none; color-scheme: dark; }
-    
-    .btn-emoji {
-      width: 32px; height: 32px; flex: none; border: 1px solid var(--border-dim);
-      background: var(--bg-card); border-radius: 6px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; font-size: 16px;
-      transition: all var(--transition);
-    }
-    .btn-emoji:hover { border-color: var(--accent); background: var(--accent-glow); }
-    
+    .btn-emoji { width: 32px; height: 32px; flex: none; border: 1px solid var(--border-dim); background: var(--bg-card); border-radius: 6px; cursor: pointer; }
     .data-input-day { width: 28px; flex: none; font-size: 12px; font-weight: 600; color: var(--accent); text-align: center; }
-
-    .btn-delete-row {
-      background: none; border: none; color: var(--text-muted); font-size: 14px;
-      cursor: pointer; padding: 2px 4px; line-height: 1; transition: color var(--transition); flex-shrink: 0;
-    }
+    .btn-delete-row { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px 4px; }
     .btn-delete-row:hover { color: var(--red); }
-    .btn-add {
-      display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; padding: 6px 0; margin-top: 4px;
-      background: none; border: 1px dashed var(--border); border-radius: 6px; color: var(--text-muted);
-      font-family: 'Pretendard', sans-serif; font-size: 12px; cursor: pointer; transition: all var(--transition);
-    }
-    .btn-add:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+    .btn-add { width: 100%; padding: 6px 0; background: none; border: 1px dashed var(--border); border-radius: 6px; color: var(--text-muted); font-size: 12px; cursor: pointer; }
+    
+    /* ── Timetable Kanban Grid ── */
+    .tt-grid { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .tt-col { flex: 1; min-width: 130px; display: flex; flex-direction: column; gap: 6px; }
+    .tt-col-header { text-align: center; font-size: 13px; font-weight: 600; color: var(--text-dim); margin-bottom: 4px; }
+    .tt-card { background: var(--bg-hover); border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; padding: 4px 6px; gap: 4px; }
+    .tt-card-drag { cursor: grab; color: var(--text-muted); font-size: 14px; }
+    .tt-card-drag:active { cursor: grabbing; }
+    .tt-card-input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'Pretendard', sans-serif; font-size: 13px; min-width: 0; text-align: center; }
+    
+    .tag-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; transition: color var(--transition); }
+    .tag-close:hover { color: var(--red); }
 
-    .btn-drawer {
-      flex: 1; padding: 10px 0; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card);
-      color: var(--text-dim); font-family: 'Pretendard', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all var(--transition);
-    }
-    .btn-drawer:hover { border-color: var(--text-muted); color: var(--text); }
-    .btn-drawer-primary {
-      flex: 1; padding: 10px 0; border: none; border-radius: var(--radius); background: linear-gradient(135deg, var(--accent), #4A8BD4);
-      color: #fff; font-family: 'Pretendard', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition);
-    }
-    .btn-drawer-primary:hover { filter: brightness(1.1); }
-    .btn-drawer-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* ── Emoji Picker Popup ── */
-    .emoji-picker-popup {
-      position: absolute; z-index: 300; display: none;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 8px;
-    }
-    .emoji-picker-popup.show { display: block; }
-    emoji-picker {
-      --background: var(--bg-surface);
-      --border-color: var(--border);
-      --input-border-color: var(--border);
-      --category-font-color: var(--text);
-      --indicator-color: var(--accent);
-      --button-hover-background: var(--bg-hover);
-      --button-active-background: var(--accent-glow);
-    }
-
-    /* ── Utilities ── */
+    /* ── Toasts & Loading ── */
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
-    .toast {
-      padding: 12px 18px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; color: var(--text);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4); animation: toast-in 0.3s ease; display: flex; align-items: center; gap: 8px;
-    }
+    .toast { padding: 12px 18px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,0.4); animation: toast-in 0.3s ease; }
     .toast.success { border-color: var(--green); }
     .toast.error   { border-color: var(--red); }
-    @keyframes toast-in  { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-    @keyframes toast-out { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(20px); } }
-
-    .loading-overlay { position: absolute; inset: 0; background: rgba(6,6,9,0.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 10; border-radius: var(--radius-lg); }
-    .loading-overlay.show { display: flex; }
+    @keyframes toast-in { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    
+    .loading-overlay { position: absolute; inset: 0; background: rgba(6,6,9,0.7); backdrop-filter: blur(4px); z-index: 10; display: flex; align-items: center; justify-content: center; }
     .loading-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
 
+    /* Emoji Picker */
+    .emoji-picker-popup { position: absolute; z-index: 300; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 8px; display: none; }
+    .emoji-picker-popup.show { display: block; }
+    emoji-picker { --background: var(--bg-surface); --border-color: var(--border); --input-border-color: var(--border); --category-font-color: var(--text); --indicator-color: var(--accent); }
+    
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-    @media (max-width: 900px) {
-      .main-split { flex-direction: column; }
-      .splitter { width: 100%; height: 8px; cursor: row-resize; }
-      .splitter::after { width: 30px; height: 2px; }
-      .panel-left { width: 100% !important; max-width: none; height: 50vh; }
-      .app { padding: 16px; }
-      .drawer { width: 100%; }
-    }
   </style>
 </head>
-<body>
+<body x-data="alrimjangApp()">
 
 <div class="app">
   <!-- ════════ Header ════════ -->
@@ -369,545 +185,550 @@
     <div class="header-left">
       <span class="header-icon">📋</span>
       <span class="header-title">알림장</span>
-      <span class="header-version" id="header-version"></span>
     </div>
-    
     <div class="header-right">
       <div class="header-date">
-        <span class="header-today" id="header-today">로딩 중...</span>
+        <span class="header-today" x-text="config ? config.today_str : '로딩 중...'"></span>
         <span class="header-arrow">→</span>
-        <span class="header-next" id="header-next"></span>
+        <span class="header-next" x-text="config ? config.next_day_str + ' 알림장' : ''"></span>
       </div>
-      <button class="btn-header" onclick="openModal('guide-modal')">❓ 가이드</button>
-      <button class="btn-header" onclick="openModal('settings-modal')">👁️ 화면 설정</button>
-      <button class="btn-header primary" onclick="openDataDrawer()">⚙️ 데이터 관리</button>
-      <button class="btn-header" style="color: var(--red); border-color: rgba(255,107,107,0.3);" onclick="shutdownServer()">🔌 종료</button>
+      <button class="btn-header" @click="showGuide = true">❓ 가이드</button>
+      <button class="btn-header" @click="showSettings = true">👁️ 화면 설정</button>
+      <button class="btn-header primary" @click="openDrawer()">⚙️ 데이터 관리</button>
+      <button class="btn-header" style="color: var(--red); border-color: rgba(255,107,107,0.3);" @click="shutdownServer()">🔌 종료</button>
     </div>
   </header>
 
-  <!-- ════════ Main Split Layout ════════ -->
-  <div class="main-split">
-    
-    <!-- ──── Left: Editor ──── -->
-    <div class="panel panel-left" id="panel-left">
+  <!-- ════════ Main Split ════════ -->
+  <div class="main-split" x-ref="splitContainer">
+    <!-- Left: Editor -->
+    <div class="panel panel-left" :style="`width: ${editorWidth}px`">
       <div class="panel-header">
         <div class="panel-title"><span class="panel-title-icon">📢</span> 공지사항 작성</div>
-        <span class="line-count" id="line-count">0줄</span>
+        <span class="line-count" x-text="lineCount + '줄'"></span>
       </div>
-      
       <div class="panel-body">
         <div class="editor-wrapper">
-          <div class="line-numbers" id="line-numbers"><div>1</div></div>
-          <textarea id="editor" class="editor-textarea"
-            placeholder="공지사항을 입력하세요...&#10;&#10;예시:&#10;**내일 체육복 지참 필수**&#10;*수행평가 제출 마감 D-1*&#10;---&#10;[중요] 현장학습 동의서 제출"
-            spellcheck="false" autocomplete="off"></textarea>
+          <div class="line-numbers" x-ref="lineNumbers" x-html="lineNumbersHtml"></div>
+          <textarea x-model="notices" @input="syncScroll()" @scroll="syncScroll()" @keydown="onKeydown"
+            class="editor-textarea" placeholder="공지사항을 입력하세요..." spellcheck="false" autocomplete="off"></textarea>
         </div>
       </div>
-
       <div class="editor-toolbar">
         <div class="editor-hints">
           <span class="editor-hint"><kbd>Alt</kbd>+<kbd>↑</kbd><kbd>↓</kbd> 줄 이동</span>
           <span class="editor-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> 생성</span>
         </div>
-        <button class="btn-generate" id="btn-generate" onclick="generateImage()">
-          <span class="spinner"></span> 📋 알림장 생성
+        <button class="btn-generate" @click="generateImage()" :disabled="isGenerating">
+          <span class="spinner" x-show="isGenerating"></span> 
+          <span x-text="isGenerating ? '저장 중...' : '📋 캡처 및 클립보드 복사'"></span>
         </button>
       </div>
     </div>
 
-    <!-- ──── Splitter ──── -->
-    <div class="splitter" id="splitter"></div>
+    <!-- Splitter -->
+    <div class="splitter" :class="{'active': isDragging}" @mousedown="startDrag"></div>
 
-    <!-- ──── Right: Preview ──── -->
+    <!-- Right: Preview -->
     <div class="panel panel-right">
       <div class="panel-header">
         <div class="panel-title"><span class="panel-title-icon">👁️</span> 실시간 미리보기</div>
       </div>
-      
       <div class="panel-body">
-        <div class="preview-container" id="preview-container">
-          <div class="preview-empty" id="preview-empty">
+        <div class="preview-container" x-ref="previewContainer">
+          <div class="preview-empty" x-show="!notices.trim()">
             <span class="preview-empty-icon">📝</span> 공지사항을 입력하면 미리보기가 표시됩니다
           </div>
-          <div class="preview-scaler" id="preview-scaler">
-            <iframe id="preview-frame" class="preview-frame" scrolling="no" sandbox="allow-scripts allow-same-origin"></iframe>
+          <div class="preview-scaler" x-show="notices.trim()" x-ref="previewScaler">
+            <iframe x-ref="previewFrame" class="preview-frame" scrolling="no" sandbox="allow-scripts allow-same-origin"></iframe>
           </div>
         </div>
       </div>
-      
-      <div class="result-bar" id="result-bar">
-        <div class="result-info">
-          <span>✅</span> <span id="result-filename">저장 완료</span>
-          <span style="color:var(--text-muted);margin-left:4px;">· 클립보드 복사됨</span>
-        </div>
-      </div>
-      <div class="loading-overlay" id="generate-overlay"><div class="loading-spinner"></div></div>
+      <div class="loading-overlay" x-show="isGenerating"><div class="loading-spinner"></div></div>
     </div>
   </div>
 </div>
 
 <!-- ════════ Modals ════════ -->
-<!-- Settings Modal -->
-<div class="modal-overlay" id="settings-modal" onclick="closeModal('settings-modal')">
-  <div class="modal" onclick="event.stopPropagation()">
+<div class="modal-overlay" :class="{'open': showSettings}" @click="showSettings = false">
+  <div class="modal" @click.stop>
     <div class="modal-header">
       <div class="modal-title">👁️ 화면 표시 설정</div>
-      <button class="modal-close" onclick="closeModal('settings-modal')">✕</button>
+      <button class="modal-close" @click="showSettings = false">✕</button>
     </div>
     <div class="modal-body">
       <div class="setting-item">
-        <div class="setting-label"><span style="font-size:16px">🍱</span> 급식 섹션 표시</div>
-        <label class="toggle"><input type="checkbox" id="toggle-meal" checked onchange="onSettingChange()"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+        <div class="setting-label">🍱 급식 섹션 표시</div>
+        <label class="toggle"><input type="checkbox" x-model="settings.meal"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
       </div>
       <div class="setting-item">
-        <div class="setting-label"><span style="font-size:16px">☀️</span> 날씨 섹션 표시</div>
-        <label class="toggle"><input type="checkbox" id="toggle-weather" checked onchange="onSettingChange()"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+        <div class="setting-label">☀️ 날씨 섹션 표시</div>
+        <label class="toggle"><input type="checkbox" x-model="settings.weather"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
       </div>
       <div class="setting-item">
-        <div class="setting-label"><span style="font-size:16px">🎯</span> D-Day 섹션 표시</div>
-        <label class="toggle"><input type="checkbox" id="toggle-dday" checked onchange="onSettingChange()"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+        <div class="setting-label">🎯 D-Day 섹션 표시</div>
+        <label class="toggle"><input type="checkbox" x-model="settings.dday"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Guide Modal -->
-<div class="modal-overlay" id="guide-modal" onclick="closeModal('guide-modal')">
-  <div class="modal" onclick="event.stopPropagation()">
+<div class="modal-overlay" :class="{'open': showGuide}" @click="showGuide = false">
+  <div class="modal" @click.stop>
     <div class="modal-header">
       <div class="modal-title">❓ 마크다운 문법 가이드</div>
-      <button class="modal-close" onclick="closeModal('guide-modal')">✕</button>
+      <button class="modal-close" @click="showGuide = false">✕</button>
     </div>
     <div class="modal-body">
-      <table class="guide-table">
-        <tr><td>**텍스트**</td><td>굵은 흰색 글씨</td></tr>
-        <tr><td>*텍스트*</td><td>기울어진 회색 글씨</td></tr>
-        <tr><td>~~텍스트~~</td><td>취소선 처리</td></tr>
-        <tr><td>[중요] 텍스트</td><td>🔴 중요 배지 + 굵은 글씨</td></tr>
-        <tr><td>---</td><td>구분선</td></tr>
+      <table style="width:100%;font-size:13px;border-collapse:collapse;">
+        <tr style="border-bottom:1px solid var(--border-dim)"><td style="color:var(--accent);padding:10px 0;width:120px;">**텍스트**</td><td>굵은 흰색 글씨</td></tr>
+        <tr style="border-bottom:1px solid var(--border-dim)"><td style="color:var(--accent);padding:10px 0;">*텍스트*</td><td>기울어진 회색 글씨</td></tr>
+        <tr style="border-bottom:1px solid var(--border-dim)"><td style="color:var(--accent);padding:10px 0;">~~텍스트~~</td><td>취소선 처리</td></tr>
+        <tr style="border-bottom:1px solid var(--border-dim)"><td style="color:var(--accent);padding:10px 0;">[중요] 텍스트</td><td>🔴 중요 배지 + 굵은 글씨</td></tr>
+        <tr><td style="color:var(--accent);padding:10px 0;">---</td><td>구분선</td></tr>
       </table>
     </div>
   </div>
 </div>
 
 <!-- ════════ Data Drawer ════════ -->
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeDataDrawer()"></div>
-<div class="drawer" id="data-drawer">
+<div class="drawer-overlay" :class="{'open': showDrawer}" @click="closeDrawer()"></div>
+<div class="drawer" :class="{'open': showDrawer}">
   <div class="drawer-header">
     <h2>📂 데이터 관리 <span style="font-weight:400;font-size:12px;color:var(--text-muted);">data.json</span></h2>
-    <button class="drawer-close" onclick="closeDataDrawer()">✕</button>
+    <button class="drawer-close" @click="closeDrawer()">✕</button>
   </div>
   <div class="drawer-body" id="drawer-body-scroll">
+    
+    <!-- Overrides (Sparse UI) -->
+    <div class="data-section">
+      <div class="data-section-header">
+        🔄 오늘 시간표 부분 수정 <span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:6px;">위아래로 드래그 앤 드롭 가능</span>
+      </div>
+      <div class="data-section-body" style="padding: 14px;">
+        <div style="display:flex; flex-direction:column; gap:8px;" x-init="initSortable($el, overrides)">
+          <template x-for="(item, i) in overrides" :key="item.id || i">
+            <div class="tt-card" style="width: 240px;">
+              <span class="tt-card-drag">⣿</span>
+              <input type="number" class="tt-card-input" style="width:36px; flex:none; text-align:center; background:var(--bg-input); border-radius:4px;" x-model.number="item.period" min="1" max="15">
+              <span style="color:var(--text-dim);font-size:13px;">교시 ➔</span>
+              <input type="text" class="tt-card-input" style="text-align:left; padding-left:4px;" placeholder="과목명" x-model="item.text">
+              <button class="tag-close" @click="overrides.splice(i,1)">✕</button>
+            </div>
+          </template>
+        </div>
+        <button class="btn-add" style="width:240px; margin-top:8px;" @click="overrides.push({period: overrides.length ? Math.max(...overrides.map(o=>o.period))+1 : 1, text:'', id: Math.random().toString(36).substr(2,9)})">+ 특정 교시 수정 추가</button>
+      </div>
+    </div>
+
+    <!-- Timetable (Kanban Grid) -->
+    <div class="data-section">
+      <div class="data-section-header">🗓️ 기본 시간표 <span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:6px;">위아래로 드래그 앤 드롭 가능</span></div>
+      <div class="data-section-body" style="padding: 14px;">
+        <div class="tt-grid">
+          <template x-for="day in ['monday','tuesday','wednesday','thursday','friday']">
+            <div class="tt-col">
+              <div class="tt-col-header" x-text="day==='monday'?'월요일':day==='tuesday'?'화요일':day==='wednesday'?'수요일':day==='thursday'?'목요일':'금요일'"></div>
+              <div style="display:flex; flex-direction:column; gap:6px; min-height: 100px;" x-init="initSortable($el, timetableDays[day])">
+                <template x-for="(item, i) in timetableDays[day]" :key="item.id">
+                  <div class="tt-card">
+                    <span class="tt-card-drag">⣿</span>
+                    <input type="text" class="tt-card-input" x-model="item.text" placeholder="빈 교시">
+                    <button class="tag-close" @click="timetableDays[day].splice(i,1)">✕</button>
+                  </div>
+                </template>
+              </div>
+              <button class="btn-add" @click="timetableDays[day].push({id: Math.random().toString(36).substr(2,9), text:''})">+ 추가</button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
     <!-- D-Day -->
     <div class="data-section">
-      <div class="data-section-header">
-        <div class="data-section-title">🎯 D-Day 이벤트</div>
+      <div class="data-section-header">🎯 D-Day 이벤트</div>
+      <div class="data-section-body" x-init="initSortable($el, ddayList, {axis: 'y'})">
+        <template x-for="(item, i) in ddayList" :key="item.id">
+          <div class="data-row" style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+            <span class="tt-card-drag">⣿</span>
+            <button class="btn-emoji" @click.stop="openEmojiPicker($event, i)">
+              <span x-text="item.emoji || '📌'"></span>
+            </button>
+            <input class="data-input" type="text" x-model="item.name" placeholder="이벤트 이름">
+            <input class="data-input data-input-date" type="date" x-model="item.date">
+            <button class="btn-delete-row" @click="ddayList.splice(i,1)">✕</button>
+          </div>
+        </template>
       </div>
-      <div class="data-section-body" id="dday-list"></div>
-      <div style="padding:0 14px 10px;">
-        <button class="btn-add" onclick="addDdayRow()">+ 추가</button>
-      </div>
+      <div style="padding:0 14px 10px;"><button class="btn-add" @click="ddayList.push({emoji:'📌',name:'',date:''})">+ 이벤트 추가</button></div>
     </div>
-    <!-- School Holidays -->
+
+    <!-- Holidays -->
     <div class="data-section">
-      <div class="data-section-header">
-        <div class="data-section-title">📅 학교 자체 휴일</div>
+      <div class="data-section-header">📅 학교 자체 휴일</div>
+      <div class="data-section-body">
+        <template x-for="(item, i) in holidayList" :key="i">
+          <div class="data-row">
+            <input class="data-input data-input-date" type="date" x-model="item.date">
+            <input class="data-input" type="text" x-model="item.name" placeholder="예: 재량휴업일">
+            <button class="btn-delete-row" @click="holidayList.splice(i,1)">✕</button>
+          </div>
+        </template>
       </div>
-      <div class="data-section-body" id="holiday-list"></div>
-      <div style="padding:0 14px 10px;">
-        <button class="btn-add" onclick="addHolidayRow()">+ 추가</button>
-      </div>
-    </div>
-    <!-- Timetable -->
-    <div class="data-section">
-      <div class="data-section-header">
-        <div class="data-section-title">🗓️ 기본 시간표 <span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:6px;">쉼표(,)로 구분</span></div>
-      </div>
-      <div class="data-section-body" id="timetable-list"></div>
-    </div>
-    <!-- Overrides -->
-    <div class="data-section">
-      <div class="data-section-header">
-        <div class="data-section-title">📌 특정일 시간표 변경 (단축수업 등)</div>
-      </div>
-      <div class="data-section-body" id="override-list"></div>
-      <div style="padding:0 14px 10px;">
-        <button class="btn-add" onclick="addOverrideRow()">+ 추가</button>
-      </div>
+      <div style="padding:0 14px 10px;"><button class="btn-add" @click="holidayList.push({date:'',name:''})">+ 휴일 추가</button></div>
     </div>
   </div>
   <div class="drawer-footer">
-    <button class="btn-drawer" onclick="closeDataDrawer()">취소</button>
-    <button class="btn-drawer-primary" id="btn-save-data" onclick="saveData()">💾 저장</button>
+    <button style="flex:1;padding:10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-card);color:var(--text-dim);cursor:pointer;" @click="closeDrawer()">취소</button>
+    <button style="flex:1;padding:10px;border:none;border-radius:var(--radius);background:linear-gradient(135deg,var(--accent),#4A8BD4);color:#fff;font-weight:700;cursor:pointer;" @click="saveData()">💾 저장</button>
   </div>
 </div>
 
-<!-- Emoji Picker Popup -->
-<div class="emoji-picker-popup" id="emoji-popup">
-  <emoji-picker id="emoji-picker"></emoji-picker>
+<!-- Emoji Picker -->
+<div class="emoji-picker-popup" :class="{'show': emojiPickerTargetIndex !== null}" id="emoji-popup" @click.stop>
+  <emoji-picker id="emoji-picker" @emoji-click="onEmojiSelect($event)"></emoji-picker>
 </div>
 
-<div class="toast-container" id="toast-container"></div>
+<!-- Toasts -->
+<div class="toast-container">
+  <template x-for="toast in toasts" :key="toast.id">
+    <div class="toast" :class="toast.type">
+      <span x-text="toast.type === 'success' ? '✅' : '⚠️'"></span>
+      <span x-text="toast.msg"></span>
+    </div>
+  </template>
+</div>
 
 <script>
-// ── State ──
-let config = null;
-let previewDebounceTimer = null;
-let previewAbortController = null;
-let iframeReady = false;
-const PREVIEW_DEBOUNCE_MS = 200;
+document.addEventListener('alpine:init', () => {
+  Alpine.data('alrimjangApp', () => ({
+    config: null,
+    notices: '',
+    settings: { meal: true, weather: true, dday: true },
+    
+    showGuide: false,
+    showSettings: false,
+    showDrawer: false,
+    isGenerating: false,
+    toasts: [],
+    toastId: 0,
+    
+    editorWidth: 600,
+    isDragging: false,
+    
+    fullData: null,
+    ddayList: [],
+    holidayList: [],
+    timetableDays: { monday:[], tuesday:[], wednesday:[], thursday:[], friday:[] },
+    overrides: [],
+    
+    emojiPickerTargetIndex: null,
+    previewDebounce: null,
+    iframeReady: false,
 
-// DOM
-const editor       = document.getElementById('editor');
-const lineNumbers  = document.getElementById('line-numbers');
-const lineCount    = document.getElementById('line-count');
-const previewFrame = document.getElementById('preview-frame');
-const previewEmpty = document.getElementById('preview-empty');
-const previewScaler = document.getElementById('preview-scaler');
-const btnGenerate  = document.getElementById('btn-generate');
-const resultBar    = document.getElementById('result-bar');
+    get lineCount() {
+      return this.notices.split('\n').filter(l => l.trim()).length;
+    },
+    get lineNumbersHtml() {
+      const lines = this.notices.split('\n');
+      return lines.map((_, i) => `<div>${i + 1}</div>`).join('');
+    },
 
-// ── Init ──
-document.addEventListener('DOMContentLoaded', init);
-async function init() {
-  try { const r = await fetch('/api/config'); config = await r.json(); applyConfig(); }
-  catch { showToast('설정을 불러올 수 없습니다.', 'error'); }
-  editor.addEventListener('input', onEditorInput);
-  editor.addEventListener('scroll', syncScroll);
-  editor.addEventListener('keydown', onEditorKeydown);
-  updateLineNumbers();
-}
-function applyConfig() {
-  document.getElementById('header-today').textContent = config.today_str;
-  document.getElementById('header-next').textContent = config.next_day_str + ' 알림장';
-  document.getElementById('toggle-meal').checked = config.settings.meal;
-  document.getElementById('toggle-weather').checked = config.settings.weather;
-  document.getElementById('toggle-dday').checked = config.settings.dday;
-}
+    async init() {
+      await this.fetchConfig();
+      
+      this.$watch('notices', () => this.schedulePreview());
+      this.$watch('settings', () => this.schedulePreview(), { deep: true });
+      
+      const doc = this.$refs.previewFrame.contentDocument;
+      doc.open(); doc.write(''); doc.close();
+      
+      new ResizeObserver(() => this.scalePreview()).observe(this.$refs.previewContainer);
+      
+      // 초기 에디터 비율 55%
+      this.$nextTick(() => {
+        const cw = this.$refs.splitContainer.clientWidth;
+        if (cw > 0) this.editorWidth = cw * 0.55;
+      });
+      
+      // Emoji Picker Events
+      document.addEventListener('click', (e) => {
+        if (this.emojiPickerTargetIndex !== null && !e.target.closest('emoji-picker') && !e.target.closest('#emoji-popup')) {
+          this.emojiPickerTargetIndex = null;
+        }
+      });
+      
+      // Splitter global events
+      window.addEventListener('mousemove', (e) => {
+        if (!this.isDragging) return;
+        const offset = this.$refs.splitContainer.getBoundingClientRect().left;
+        let nw = e.clientX - offset - 6;
+        if (nw < 300) nw = 300;
+        this.editorWidth = nw;
+        this.scalePreview();
+      });
+      window.addEventListener('mouseup', () => {
+        if (this.isDragging) {
+          this.isDragging = false;
+          document.body.style.cursor = '';
+        }
+      });
+    },
 
-// ── Modals ──
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    async fetchConfig() {
+      try {
+        const res = await fetch('/api/config');
+        this.config = await res.json();
+        this.settings.meal = this.config.settings.meal;
+        this.settings.weather = this.config.settings.weather;
+        this.settings.dday = this.config.settings.dday;
+      } catch { this.addToast('설정을 불러올 수 없습니다.', 'error'); }
+    },
 
-// ── Splitter ──
-const splitter = document.getElementById('splitter');
-const panelLeft = document.getElementById('panel-left');
-let isDragging = false;
+    schedulePreview() {
+      clearTimeout(this.previewDebounce);
+      this.previewDebounce = setTimeout(() => this.fetchPreview(), 200);
+    },
 
-splitter.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  splitter.classList.add('active');
-  document.body.style.cursor = 'col-resize';
-  // prevent iframe from eating mouse events during drag
-  previewFrame.style.pointerEvents = 'none';
-});
+    async fetchPreview() {
+      if (!this.notices.trim()) return;
+      try {
+        const res = await fetch('/api/preview', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ notices: this.notices, settings: this.settings })
+        });
+        const data = await res.json();
+        
+        const doc = this.$refs.previewFrame.contentDocument || this.$refs.previewFrame.contentWindow.document;
+        if (!this.iframeReady) {
+          doc.open(); doc.write(data.html); doc.close();
+          this.$refs.previewFrame.onload = () => { this.iframeReady = true; this.scalePreview(); };
+        } else {
+          const m = data.html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+          if (m && doc.body) {
+            doc.body.innerHTML = m[1];
+            requestAnimationFrame(() => requestAnimationFrame(() => this.scalePreview()));
+          }
+        }
+      } catch(e) {}
+    },
 
-document.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-  const container = document.querySelector('.main-split').getBoundingClientRect();
-  let newWidth = e.clientX - container.left - 6; 
-  if (newWidth < 300) newWidth = 300;
-  if (newWidth > container.width - 300) newWidth = container.width - 300;
-  panelLeft.style.width = `${newWidth}px`;
-  scalePreview();
-});
+    scalePreview() {
+      const container = this.$refs.previewContainer;
+      const scaler = this.$refs.previewScaler;
+      const frame = this.$refs.previewFrame;
+      if (!scaler || scaler.style.display === 'none') return;
+      
+      const cw = container.clientWidth - 32, cardW = 800;
+      const scale = Math.min(cw / cardW, 1);
+      frame.style.width = cardW + 'px';
+      
+      const d = frame.contentDocument;
+      if (d && d.documentElement) {
+        const h = d.documentElement.scrollHeight;
+        frame.style.height = h + 'px';
+        scaler.style.width = Math.floor(cardW * scale) + 'px';
+        scaler.style.height = Math.floor(h * scale) + 'px';
+      }
+      frame.style.transform = `scale(${scale})`;
+    },
 
-document.addEventListener('mouseup', () => {
-  if (isDragging) {
-    isDragging = false;
-    splitter.classList.remove('active');
-    document.body.style.cursor = '';
-    previewFrame.style.pointerEvents = 'auto';
-  }
-});
+    // ── Generate Image (Frontend Capture) ──
+    async generateImage() {
+      if (!this.notices.trim()) { this.addToast('공지사항을 입력해주세요.', 'error'); return; }
+      this.isGenerating = true;
+      try {
+        const doc = this.$refs.previewFrame.contentDocument;
+        const node = doc.querySelector('body > div');
+        if (!node) throw new Error("No preview content");
 
-// ── Editor ──
-function onEditorInput() { updateLineNumbers(); schedulePreview(); }
-function updateLineNumbers() {
-  const lines = editor.value.split('\n');
-  lineNumbers.innerHTML = lines.map((_,i) => `<div>${i+1}</div>`).join('');
-  lineCount.textContent = `${lines.filter(l=>l.trim()).length}줄`;
-}
-function syncScroll() { lineNumbers.scrollTop = editor.scrollTop; }
+        const dataUrl = await htmlToImage.toPng(node, {
+          cacheBust: true,
+          style: { transform: 'scale(1)', transformOrigin: 'top left' }
+        });
 
-// ── Line Move ──
-function onEditorKeydown(e) {
-  if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
-  e.preventDefault();
-  const start = editor.selectionStart;
-  const lines = editor.value.split('\n');
-  let cc = 0, li = 0;
-  for (let i = 0; i < lines.length; i++) { const end = cc + lines[i].length + 1; if (start < end) { li = i; break; } cc = end; }
-  if (e.key === 'ArrowUp' && li > 0) {
-    [lines[li-1], lines[li]] = [lines[li], lines[li-1]];
-    editor.value = lines.join('\n');
-    let np = 0; for (let i = 0; i < li-1; i++) np += lines[i].length + 1;
-    np += Math.min(start - cc, lines[li-1].length);
-    editor.selectionStart = editor.selectionEnd = np;
-  } else if (e.key === 'ArrowDown' && li < lines.length - 1) {
-    [lines[li], lines[li+1]] = [lines[li+1], lines[li]];
-    editor.value = lines.join('\n');
-    let np = 0; for (let i = 0; i < li+1; i++) np += lines[i].length + 1;
-    np += Math.min(start - cc, lines[li+1].length);
-    editor.selectionStart = editor.selectionEnd = np;
-  }
-  updateLineNumbers(); schedulePreview();
-}
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ dataUrl, settings: this.settings })
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+          this.addToast('✅ 클립보드 복사 및 저장 완료!', 'success');
+        } else {
+          this.addToast(result.error || '저장 실패', 'error');
+        }
+      } catch(e) {
+        console.error(e);
+        this.addToast('캡처 중 오류가 발생했습니다.', 'error');
+      }
+      this.isGenerating = false;
+    },
 
-// ── Settings ──
-function getSettings() {
-  return { meal: document.getElementById('toggle-meal').checked, weather: document.getElementById('toggle-weather').checked, dday: document.getElementById('toggle-dday').checked };
-}
-function onSettingChange() { schedulePreview(); }
+    // ── Drawer CRUD ──
+    async openDrawer() {
+      try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        this.fullData = data;
+        this.ddayList = (data.dday || []).map(d => ({ ...d, id: Math.random().toString(36).substr(2,9) }));
+        this.holidayList = data.school_holidays ? (Array.isArray(data.school_holidays) ? data.school_holidays : Object.entries(data.school_holidays).map(([date,name])=>({date,name}))) : [];
+        
+        // Timetable 로드 (id 객체화)
+        const tt = data.timetable || {};
+        ['monday','tuesday','wednesday','thursday','friday'].forEach(d => {
+          this.timetableDays[d] = (tt[d] || []).map(text => ({ id: Math.random().toString(36).substr(2,9), text }));
+        });
+        
+        // Overrides 로드 (Sparse Dict -> Array)
+        const dateStr = this.config.next_day_date;
+        const o_data = (data.overrides && data.overrides[dateStr]) || {};
+        if (Array.isArray(o_data)) {
+          this.overrides = o_data.map((text, i) => ({ period: i+1, text, id: Math.random().toString(36).substr(2,9) }));
+        } else {
+          this.overrides = Object.entries(o_data).map(([p, text]) => ({ period: parseInt(p), text, id: Math.random().toString(36).substr(2,9) }));
+          this.overrides.sort((a,b) => a.period - b.period);
+        }
+        
+        this.showDrawer = true;
+      } catch { this.addToast('데이터를 불러올 수 없습니다.', 'error'); }
+    },
+    closeDrawer() {
+      this.showDrawer = false;
+      this.emojiPickerTargetIndex = null;
+    },
+    async saveData() {
+      // Overrides 저장 처리 (Array -> Sparse Dict)
+      this.fullData.overrides = this.fullData.overrides || {};
+      const validOverrides = this.overrides.filter(o => o.text.trim() && o.period > 0);
+      if (validOverrides.length > 0) {
+        const dict = {};
+        validOverrides.forEach(o => dict[o.period] = o.text.trim());
+        this.fullData.overrides[this.config.next_day_date] = dict;
+      } else {
+        delete this.fullData.overrides[this.config.next_day_date];
+      }
 
-// ── Preview ──
-function schedulePreview() { clearTimeout(previewDebounceTimer); previewDebounceTimer = setTimeout(fetchPreview, PREVIEW_DEBOUNCE_MS); }
-async function fetchPreview() {
-  const text = editor.value.trim();
-  if (!text) { previewEmpty.style.display = 'flex'; previewScaler.style.display = 'none'; return; }
-  if (previewAbortController) previewAbortController.abort();
-  previewAbortController = new AbortController();
-  try {
-    const res = await fetch('/api/preview', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({notices:editor.value, settings:getSettings()}), signal: previewAbortController.signal });
-    const data = await res.json();
-    previewEmpty.style.display = 'none'; previewScaler.style.display = 'block';
-    const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-    if (!iframeReady) {
-      doc.open(); doc.write(data.html); doc.close();
-      const onReady = () => { if (iframeReady) return; iframeReady = true; scalePreview(); };
-      previewFrame.addEventListener('load', onReady, {once:true}); setTimeout(onReady, 3000);
-    } else {
-      const m = data.html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-      if (m && doc.body) { doc.body.innerHTML = m[1]; requestAnimationFrame(()=>requestAnimationFrame(()=>scalePreview())); }
+      // Timetable 역변환 (객체배열 -> 문자열배열)
+      const ttDict = {};
+      ['monday','tuesday','wednesday','thursday','friday'].forEach(d => {
+        ttDict[d] = this.timetableDays[d].map(item => item.text.trim());
+        // trailing empties
+        while(ttDict[d].length && !ttDict[d][ttDict[d].length-1]) ttDict[d].pop();
+      });
+
+      const body = {
+        ...this.fullData,
+        dday: this.ddayList.filter(d => d.name && d.date),
+        school_holidays: this.holidayList.filter(h => h.name && h.date),
+        timetable: ttDict
+      };
+      
+      try {
+        const res = await fetch('/api/data', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const result = await res.json();
+        if (result.success) {
+          this.addToast('✅ 데이터가 저장되었습니다.', 'success');
+          if (result.date_changed) this.addToast('📅 등교일이 변경되어 급식/날씨가 갱신되었습니다.', 'success');
+          await this.fetchConfig();
+          this.iframeReady = false; this.schedulePreview();
+          this.closeDrawer();
+        }
+      } catch { this.addToast('저장 중 오류 발생', 'error'); }
+    },
+
+    // ── Timetable Drag & Drop ──
+    initSortable(el, targetArray) {
+      Sortable.create(el, {
+        animation: 150,
+        handle: '.tt-card-drag',
+        axis: 'y', // Lock dragging to Y-axis only
+        onEnd: (evt) => {
+          // Alpine DOM 꼬임 방지를 위해 DOM 원복 후 데이터 배열 스왑
+          const itemEl = evt.item;
+          if (evt.newIndex > evt.oldIndex) {
+              evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex]);
+          } else {
+              evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex + 1] || null);
+          }
+          const moved = targetArray.splice(evt.oldIndex, 1)[0];
+          targetArray.splice(evt.newIndex, 0, moved);
+        }
+      });
+    },
+
+    // ── Emoji Picker ──
+    onEmojiSelect(e) {
+      if (this.emojiPickerTargetIndex !== null) {
+        this.ddayList[this.emojiPickerTargetIndex].emoji = e.detail.unicode;
+        this.emojiPickerTargetIndex = null;
+      }
+    },
+    openEmojiPicker(e, index) {
+      this.emojiPickerTargetIndex = index;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const popup = document.getElementById('emoji-popup');
+      popup.style.left = `${Math.max(10, rect.left - 300)}px`;
+      popup.style.top = `${rect.bottom + 5}px`;
+    },
+
+    // ── Utils ──
+    syncScroll() { this.$refs.lineNumbers.scrollTop = this.$el.querySelector('.editor-textarea').scrollTop; },
+    startDrag() {
+      this.isDragging = true;
+      document.body.style.cursor = 'col-resize';
+    },
+    onKeydown(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); this.generateImage(); return; }
+      if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+      e.preventDefault();
+      
+      const el = e.target;
+      const start = el.selectionStart;
+      const lines = this.notices.split('\n');
+      let cc = 0, li = 0;
+      for (let i = 0; i < lines.length; i++) {
+        const end = cc + lines[i].length + 1;
+        if (start < end) { li = i; break; }
+        cc = end;
+      }
+      
+      if (e.key === 'ArrowUp' && li > 0) {
+        [lines[li-1], lines[li]] = [lines[li], lines[li-1]];
+        this.notices = lines.join('\n');
+        let np = 0; for (let i = 0; i < li-1; i++) np += lines[i].length + 1;
+        np += Math.min(start - cc, lines[li-1].length);
+        setTimeout(() => el.setSelectionRange(np, np), 0);
+      } else if (e.key === 'ArrowDown' && li < lines.length - 1) {
+        [lines[li], lines[li+1]] = [lines[li+1], lines[li]];
+        this.notices = lines.join('\n');
+        let np = 0; for (let i = 0; i < li+1; i++) np += lines[i].length + 1;
+        np += Math.min(start - cc, lines[li+1].length);
+        setTimeout(() => el.setSelectionRange(np, np), 0);
+      }
+    },
+    addToast(msg, type) {
+      const id = ++this.toastId;
+      this.toasts.push({ id, msg, type });
+      setTimeout(() => {
+        this.toasts = this.toasts.filter(t => t.id !== id);
+      }, 3000);
+    },
+    async shutdownServer() {
+      if (!confirm('서버를 종료하고 에디터를 닫으시겠습니까?')) return;
+      try {
+        await fetch('/api/shutdown', { method: 'POST' });
+        this.addToast('서버가 종료되었습니다.', 'success');
+        setTimeout(() => {
+          window.close();
+          document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#fff;font-size:20px;background:var(--bg-body);">서버가 안전하게 종료되었습니다. 이제 탭을 닫으셔도 됩니다.</div>';
+        }, 500);
+      } catch {}
     }
-  } catch(e) { if (e.name==='AbortError') return; }
-}
-function scalePreview() {
-  const container = document.getElementById('preview-container');
-  if (!previewScaler || previewScaler.style.display === 'none') return;
-  const cw = container.clientWidth - 32, cardW = 800, scale = Math.min(cw/cardW, 1);
-  previewFrame.style.width = cardW + 'px';
-  const d = previewFrame.contentDocument || previewFrame.contentWindow.document;
-  if (d && d.documentElement) {
-    const h = d.documentElement.scrollHeight;
-    previewFrame.style.height = h + 'px';
-    previewScaler.style.width = Math.floor(cardW*scale) + 'px';
-    previewScaler.style.height = Math.floor(h*scale) + 'px';
-  }
-  previewFrame.style.transform = `scale(${scale})`;
-}
-
-// ── Generate ──
-async function generateImage() {
-  if (!editor.value.trim()) { showToast('공지사항을 입력해주세요.','error'); return; }
-  btnGenerate.disabled = true; btnGenerate.classList.add('loading');
-  document.getElementById('generate-overlay').classList.add('show'); resultBar.classList.remove('show');
-  try {
-    const res = await fetch('/api/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({notices:editor.value, settings:getSettings()}) });
-    const data = await res.json();
-    if (data.success) { document.getElementById('result-filename').textContent = `output/${data.filename} 저장 완료`; resultBar.classList.add('show'); showToast('✅ 알림장 생성 완료! 클립보드에 복사되었습니다.','success'); }
-    else { showToast(data.error||'생성 실패','error'); }
-  } catch { showToast('서버 오류가 발생했습니다.','error'); }
-  finally { btnGenerate.disabled = false; btnGenerate.classList.remove('loading'); document.getElementById('generate-overlay').classList.remove('show'); }
-}
-
-// ── Toast ──
-function showToast(msg, type='info') {
-  const c = document.getElementById('toast-container'), t = document.createElement('div');
-  t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t);
-  setTimeout(()=>{ t.style.animation='toast-out 0.3s ease forwards'; setTimeout(()=>t.remove(),300); }, 3000);
-}
-
-// ══════════════════════════════════════════════════
-//  Data Drawer & Emoji Picker
-// ══════════════════════════════════════════════════
-
-const DAYS = [
-  {key:'monday',   label:'월'},
-  {key:'tuesday',  label:'화'},
-  {key:'wednesday',label:'수'},
-  {key:'thursday', label:'목'},
-  {key:'friday',   label:'금'},
-];
-
-async function openDataDrawer() {
-  try {
-    const res = await fetch('/api/data');
-    const data = await res.json();
-    populateDrawer(data);
-    document.getElementById('drawer-overlay').classList.add('open');
-    document.getElementById('data-drawer').classList.add('open');
-  } catch { showToast('데이터를 불러올 수 없습니다.','error'); }
-}
-
-function closeDataDrawer() {
-  document.getElementById('drawer-overlay').classList.remove('open');
-  document.getElementById('data-drawer').classList.remove('open');
-  closeEmojiPopup();
-}
-
-function populateDrawer(data) {
-  const ddayList = document.getElementById('dday-list'); ddayList.innerHTML = '';
-  const ddayItems = data.dday || [];
-  if (ddayItems.length === 0) ddayList.innerHTML = '<div class="data-section-empty">등록된 이벤트가 없습니다</div>';
-  ddayItems.forEach(e => addDdayRow(e));
-
-  const holList = document.getElementById('holiday-list'); holList.innerHTML = '';
-  const holItems = data.school_holidays || [];
-  if (holItems.length === 0) holList.innerHTML = '<div class="data-section-empty">등록된 휴일이 없습니다</div>';
-  holItems.forEach(h => addHolidayRow(h));
-
-  const ttList = document.getElementById('timetable-list'); ttList.innerHTML = '';
-  const tt = data.timetable || {};
-  DAYS.forEach(({key, label}) => {
-    ttList.innerHTML += `
-      <div class="data-row">
-        <span class="data-input-day">${label}</span>
-        <input class="data-input" type="text" value="${(tt[key]||[]).join(', ')}" data-day="${key}" placeholder="국어, 수학, ...">
-      </div>`;
-  });
-
-  const ovList = document.getElementById('override-list'); ovList.innerHTML = '';
-  const overrides = tt.overrides || [];
-  if (overrides.length === 0) ovList.innerHTML = '<div class="data-section-empty">오버라이드가 없습니다</div>';
-  overrides.forEach(o => addOverrideRow(o));
-}
-
-function addDdayRow(evt) {
-  const list = document.getElementById('dday-list');
-  const empty = list.querySelector('.data-section-empty'); if (empty) empty.remove();
-  const row = document.createElement('div'); row.className = 'data-row';
-  const currentEmoji = evt?.emoji || '📌';
-  row.innerHTML = `
-    <button class="btn-emoji" data-emoji-btn>${currentEmoji}</button>
-    <input type="hidden" class="data-input-emoji-val" value="${currentEmoji}">
-    <input class="data-input" type="text" value="${evt?.name||''}" placeholder="이벤트 이름 (예: 중간고사)">
-    <input class="data-input data-input-date" type="date" value="${evt?.date||''}">
-    <button class="btn-delete-row" onclick="removeRow(this,'dday-list','등록된 이벤트가 없습니다')">✕</button>`;
-  list.appendChild(row);
-}
-function addHolidayRow(h) {
-  const list = document.getElementById('holiday-list');
-  const empty = list.querySelector('.data-section-empty'); if (empty) empty.remove();
-  const row = document.createElement('div'); row.className = 'data-row';
-  row.innerHTML = `
-    <input class="data-input data-input-date" type="date" value="${h?.date||''}">
-    <input class="data-input" type="text" value="${h?.name||''}" placeholder="예: 재량휴업일">
-    <button class="btn-delete-row" onclick="removeRow(this,'holiday-list','등록된 휴일이 없습니다')">✕</button>`;
-  list.appendChild(row);
-}
-function addOverrideRow(o) {
-  const list = document.getElementById('override-list');
-  const empty = list.querySelector('.data-section-empty'); if (empty) empty.remove();
-  const row = document.createElement('div'); row.className = 'data-row';
-  row.innerHTML = `
-    <input class="data-input data-input-date" type="date" value="${o?.date||''}">
-    <input class="data-input" type="text" value="${o ? (o.subjects||[]).join(', ') : ''}" placeholder="창체, 자율, ...">
-    <button class="btn-delete-row" onclick="removeRow(this,'override-list','오버라이드가 없습니다')">✕</button>`;
-  list.appendChild(row);
-}
-function removeRow(btn, listId, emptyMsg) {
-  btn.closest('.data-row').remove();
-  const list = document.getElementById(listId);
-  if (list.children.length === 0) list.innerHTML = `<div class="data-section-empty">${emptyMsg}</div>`;
-}
-
-function collectData() {
-  const dday = [];
-  document.getElementById('dday-list').querySelectorAll('.data-row').forEach(row => {
-    const emoji = row.querySelector('.data-input-emoji-val').value;
-    const name = row.querySelectorAll('.data-input')[0].value.trim();
-    const date = row.querySelectorAll('.data-input')[1].value;
-    if (name && date) dday.push({name, date, emoji});
-  });
-  const school_holidays = [];
-  document.getElementById('holiday-list').querySelectorAll('.data-row').forEach(row => {
-    const inputs = row.querySelectorAll('.data-input');
-    if (inputs[0].value && inputs[1].value.trim()) school_holidays.push({date: inputs[0].value, name: inputs[1].value.trim()});
-  });
-  const timetable = {};
-  document.getElementById('timetable-list').querySelectorAll('.data-row').forEach(row => {
-    timetable[row.querySelector('[data-day]').dataset.day] = row.querySelector('.data-input:not(.data-input-day)').value.split(',').map(s=>s.trim()).filter(Boolean);
-  });
-  const overrides = [];
-  document.getElementById('override-list').querySelectorAll('.data-row').forEach(row => {
-    const inputs = row.querySelectorAll('.data-input');
-    const subjects = inputs[1].value.split(',').map(s=>s.trim()).filter(Boolean);
-    if (inputs[0].value && subjects.length) overrides.push({date: inputs[0].value, subjects});
-  });
-  timetable.overrides = overrides;
-  return { dday, school_holidays, timetable };
-}
-async function saveData() {
-  const btn = document.getElementById('btn-save-data');
-  btn.disabled = true; btn.textContent = '저장 중...';
-  try {
-    const res = await fetch('/api/data', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(collectData()) });
-    const result = await res.json();
-    if (result.success) {
-      showToast('✅ 데이터가 저장되었습니다.', 'success');
-      if (result.date_changed) showToast('📅 등교일이 변경되어 급식/날씨가 갱신되었습니다.', 'info');
-      const cfgRes = await fetch('/api/config'); config = await cfgRes.json(); applyConfig();
-      iframeReady = false; schedulePreview(); closeDataDrawer();
-    } else { showToast(result.error || '저장 실패', 'error'); }
-  } catch { showToast('서버 오류가 발생했습니다.', 'error'); }
-  finally { btn.disabled = false; btn.textContent = '💾 저장'; }
-}
-
-// ── Shutdown ──
-async function shutdownServer() {
-  if (!confirm('서버를 종료하고 에디터를 닫으시겠습니까?')) return;
-  try {
-    await fetch('/api/shutdown', { method: 'POST' });
-    showToast('서버가 종료되었습니다. 창을 닫습니다...', 'success');
-    setTimeout(() => {
-      window.close();
-      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#fff;font-size:20px;background:var(--bg-body);">서버가 안전하게 종료되었습니다. 이제 탭을 닫으셔도 됩니다.</div>';
-    }, 500);
-  } catch (e) {
-    showToast('종료 요청 중 오류가 발생했습니다.', 'error');
-  }
-}
-
-// ── Emoji Picker Logic ──
-const emojiPopup = document.getElementById('emoji-popup');
-const picker = document.getElementById('emoji-picker');
-let activeEmojiBtn = null;
-
-function closeEmojiPopup() {
-  emojiPopup.classList.remove('show');
-  activeEmojiBtn = null;
-}
-
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-emoji-btn]');
-  if (btn) {
-    if (activeEmojiBtn === btn) { closeEmojiPopup(); return; }
-    activeEmojiBtn = btn;
-    const rect = btn.getBoundingClientRect();
-    const drawerScroll = document.getElementById('drawer-body-scroll').scrollTop;
-    // position popup near the button
-    emojiPopup.style.left = `${Math.max(10, rect.left - 300)}px`;
-    emojiPopup.style.top = `${rect.bottom + window.scrollY + 5}px`;
-    emojiPopup.classList.add('show');
-  } else if (!emojiPopup.contains(e.target)) {
-    closeEmojiPopup();
-  }
-});
-
-picker.addEventListener('emoji-click', event => {
-  if (activeEmojiBtn) {
-    activeEmojiBtn.textContent = event.detail.unicode;
-    activeEmojiBtn.nextElementSibling.value = event.detail.unicode; // hidden input
-    closeEmojiPopup();
-  }
-});
-
-// ── Utilities ──
-if (typeof ResizeObserver !== 'undefined') new ResizeObserver(()=>scalePreview()).observe(document.getElementById('preview-container'));
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); generateImage(); }
-  if (e.key === 'Escape') { closeModal('settings-modal'); closeModal('guide-modal'); closeDataDrawer(); }
+  }));
 });
 </script>
 </body>

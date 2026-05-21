@@ -54,5 +54,4 @@ def load_dday_events(
             )
         )
 
-    events.sort(key=lambda e: e.remaining)
     return events

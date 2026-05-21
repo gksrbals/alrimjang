@@ -23,13 +23,20 @@
        class="w-[800px] bg-[#111111] text-[#E0E0E0] p-6 relative overflow-hidden box-border mx-auto">
 
     <!-- 헤더 -->
-    <header class="mb-4 pb-4 border-b-2 border-[#222222]">
-      <p class="text-[#888888] text-sm font-medium mb-1 tracking-tight">
-        오늘 {{ today_str }}
-      </p>
-      <h1 class="text-3xl font-bold tracking-tight text-white">
-        {{ next_day_str }} 안내사항
-      </h1>
+    <header class="mb-4 pb-4 border-b-2 border-[#222222] flex justify-between items-end">
+      <div>
+        <p class="text-[#888888] text-sm font-medium mb-1 tracking-tight">
+          오늘 {{ today_str }}
+        </p>
+        <h1 class="text-3xl font-bold tracking-tight text-white">
+          {{ next_day_str }} 안내사항
+        </h1>
+      </div>
+      {% if dday_events %}
+      <div class="text-[11.5px] text-[#555555] font-medium mb-1 tracking-tight">
+        ※ D-Day는 안내일({{ next_day_str.split(' ')[1] }}) 기준
+      </div>
+      {% endif %}
     </header>
 
     <!-- D-Day 카운트다운 -->
@@ -138,7 +145,7 @@
             <span class="text-xl">📢</span> 공지사항
           </h2>
 
-          <ul class="flex flex-col gap-2 text-[15px] leading-snug">
+          <ul class="flex flex-col gap-2 text-[15px] leading-snug break-keep break-words">
             {% for item in notices %}
 
             {% if item.type == 'divider' %}
@@ -146,34 +153,34 @@
 
             {% elif item.type == 'important' %}
             <li class="flex gap-2">
-              <span class="text-[#888888] mt-0.5">•</span>
-              <span class="font-bold text-white">
+              <span class="text-[#888888] mt-0.5 shrink-0">•</span>
+              <span class="font-bold text-white flex-1 min-w-0">
                 <span class="inline-block bg-[#3A1A1A] text-[#FF6B6B] text-[11px] font-bold px-1.5 py-0.5 rounded mr-1.5 align-middle">중요</span>{{ item.text }}
               </span>
             </li>
 
             {% elif item.type == 'bold' %}
             <li class="flex gap-2">
-              <span class="text-[#888888] mt-0.5">•</span>
-              <span class="font-bold text-white tracking-wide">{{ item.text }}</span>
+              <span class="text-[#888888] mt-0.5 shrink-0">•</span>
+              <span class="font-bold text-white tracking-wide flex-1 min-w-0">{{ item.text }}</span>
             </li>
 
             {% elif item.type == 'italic' %}
             <li class="flex gap-2">
-              <span class="text-[#888888] mt-0.5">•</span>
-              <span class="italic text-[#CCCCCC]">{{ item.text }}</span>
+              <span class="text-[#888888] mt-0.5 shrink-0">•</span>
+              <span class="italic text-[#CCCCCC] flex-1 min-w-0">{{ item.text }}</span>
             </li>
 
             {% elif item.type == 'strikethrough' %}
             <li class="flex gap-2 text-[#666666] line-through decoration-[#555555]">
-              <span class="text-[#555555] mt-0.5">•</span>
-              <span>{{ item.text }}</span>
+              <span class="text-[#555555] mt-0.5 shrink-0">•</span>
+              <span class="flex-1 min-w-0">{{ item.text }}</span>
             </li>
 
             {% else %}
             <li class="flex gap-2">
-              <span class="text-[#888888] mt-0.5">•</span>
-              <span class="text-white">{{ item.text }}</span>
+              <span class="text-[#888888] mt-0.5 shrink-0">•</span>
+              <span class="text-white flex-1 min-w-0">{{ item.text }}</span>
             </li>
 
             {% endif %}

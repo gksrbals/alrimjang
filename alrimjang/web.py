@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import contextlib
-import io
+import base64
 import json
 import logging
 import os
@@ -20,7 +19,7 @@ from flask import Flask, jsonify, request, render_template, send_from_directory
 
 from .data import load_data
 from .dday import load_dday_events
-from .renderer import parse_notices, render_html, render_and_export
+from .renderer import parse_notices, render_html, copy_png_to_clipboard
 from .school_meal import SchoolMeal
 from .timetable import Timetable
 from .weather import Weather
@@ -44,8 +43,12 @@ def _is_holiday(d: date, school_holidays: dict[str, str]) -> bool:
     return d.weekday() >= 5 or d in _KR_HOLIDAYS or d.isoformat() in school_holidays
 
 
+from datetime import timezone
+
 def _get_next_school_day(school_holidays: dict[str, str]) -> tuple[date, date]:
-    today = date.today()
+    # 항상 KST(UTC+9) 기준으로 현재 날짜 계산
+    kst = timezone(timedelta(hours=9))
+    today = datetime.now(kst).date()
     candidate = today + timedelta(days=1)
     while _is_holiday(candidate, school_holidays):
         candidate += timedelta(days=1)
@@ -132,46 +135,36 @@ def preview():
 
 @app.route("/api/generate", methods=["POST"])
 def generate():
-    """이미지 생성 + 클립보드 복사."""
+    """프론트엔드에서 캡처한 이미지를 파일로 저장하고 클립보드에 복사."""
     body = request.get_json(silent=True) or {}
-    notices_text: str = body.get("notices", "")
+    data_url: str = body.get("dataUrl", "")
     settings: dict = body.get("settings", _cache["settings"])
 
-    lines = notices_text.splitlines()
-    while lines and not lines[0].strip():
-        lines.pop(0)
-    while lines and not lines[-1].strip():
-        lines.pop()
+    if not data_url or not data_url.startswith("data:image/png;base64,"):
+        return jsonify(
+            {"success": False, "error": "유효하지 않은 이미지 데이터입니다."}
+        ), 400
 
-    if not lines:
-        return jsonify({"success": False, "error": "공지사항이 비어있습니다."}), 400
-
-    meal = _cache.get("school_meal") if settings.get("meal") else None
-    weather = _cache.get("weather") if settings.get("weather") else None
-    dday = _cache.get("dday_events", []) if settings.get("dday") else []
-
-    # 설정 변경 .env 저장
+    # 설정 변경 .env 저장 (필요 시)
     env_path = Path(".env")
     if env_path.exists():
         set_key(str(env_path), "SCHOOL_MEAL_ENABLED", str(settings.get("meal", True)))
         set_key(str(env_path), "WEATHER_ENABLED", str(settings.get("weather", True)))
         set_key(str(env_path), "DDAY_ENABLED", str(settings.get("dday", True)))
 
-    with (
-        contextlib.redirect_stdout(io.StringIO()),
-        contextlib.redirect_stderr(io.StringIO()),
-    ):
-        render_and_export(
-            today=_cache["today_dt"],
-            next_day=_cache["next_dt"],
-            timetable=_cache["timetable"],
-            school_meal=meal,
-            weather=weather,
-            raw_notices=lines,
-            dday_events=dday,
-        )
-
+    output_dir = Path("output")
+    output_dir.mkdir(exist_ok=True)
     filename = f"{_cache['next_day'].strftime('%Y%m%d')}.png"
+    png_path = output_dir / filename
+
+    # Base64 디코딩 후 파일 저장
+    base64_data = data_url.split(",")[1]
+    image_data = base64.b64decode(base64_data)
+    with open(png_path, "wb") as f:
+        f.write(image_data)
+
+    # 클립보드에 복사
+    copy_png_to_clipboard(png_path)
 
     return jsonify(
         {
