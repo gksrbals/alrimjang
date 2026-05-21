@@ -126,7 +126,7 @@ def _autocrop(png_path: Path) -> None:
     pixels = img.load()
     width, height = img.size
     cx = width // 2  # 카드 중앙 x 좌표
-    body_bg = (0, 0, 0)  # body 배경: #000000
+    body_bg = (10, 10, 10)  # body 배경: #0a0a0a
 
     last_row = 0
     for y in range(height - 1, -1, -1):
@@ -134,22 +134,29 @@ def _autocrop(png_path: Path) -> None:
             last_row = y
             break
 
-    # 1px만 여유 (rounded corner + alpha mask가 처리)
-    crop_height = min(last_row + 2, height)
+    crop_height = min(last_row + 1, height)
     img.crop((0, 0, width, crop_height)).save(png_path)
 
 
 def _apply_rounded_alpha(png_path: Path, radius: int = 12) -> None:
     """
-    PNG에 rounded-xl(12px) 모양 알파 마스크 적용.
-    모서리가 투명해져 카드 형태로 내보내짐.
+    PNG에 rounded(12px) 모양 알파 마스크 적용.
+    4x 슈퍼샘플링으로 안티앨리어싱된 부드러운 모서리를 생성.
     """
     img = Image.open(png_path).convert("RGBA")
     w, h = img.size
 
-    mask = Image.new("L", (w, h), 0)
-    draw = ImageDraw.Draw(mask)
-    draw.rounded_rectangle([(0, 0), (w - 1, h - 1)], radius=radius, fill=255)
+    # 4배 크기로 마스크를 그린 뒤 축소 → 부드러운 안티앨리어싱
+    scale = 4
+    big = Image.new("L", (w * scale, h * scale), 0)
+    draw = ImageDraw.Draw(big)
+    draw.rounded_rectangle(
+        [(0, 0), (w * scale, h * scale)],
+        radius=radius * scale,
+        fill=255,
+    )
+    mask = big.resize((w, h), Image.LANCZOS)
+
     img.putalpha(mask)
     img.save(png_path)  # RGBA PNG로 저장
 
