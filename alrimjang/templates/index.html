@@ -656,18 +656,19 @@ document.addEventListener('alpine:init', () => {
 
     // ── Timetable Drag & Drop ──
     initSortable(el, targetArray) {
+      let originalNextSibling = null;
       Sortable.create(el, {
         animation: 150,
         handle: '.tt-card-drag',
         axis: 'y', // Lock dragging to Y-axis only
+        onStart: (evt) => {
+          originalNextSibling = evt.item.nextElementSibling;
+        },
         onEnd: (evt) => {
+          if (evt.oldIndex === evt.newIndex) return;
           // Alpine DOM 꼬임 방지를 위해 DOM 원복 후 데이터 배열 스왑
-          const itemEl = evt.item;
-          if (evt.newIndex > evt.oldIndex) {
-              evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex]);
-          } else {
-              evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex + 1] || null);
-          }
+          evt.from.insertBefore(evt.item, originalNextSibling);
+          
           const moved = targetArray.splice(evt.oldIndex, 1)[0];
           targetArray.splice(evt.newIndex, 0, moved);
         }
