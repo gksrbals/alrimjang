@@ -319,7 +319,7 @@
         🔄 오늘 시간표 부분 수정 <span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:6px;">위아래로 드래그 앤 드롭 가능</span>
       </div>
       <div class="data-section-body" style="padding: 14px;">
-        <div style="display:flex; flex-direction:column; gap:8px;" x-init="initSortable($el, overrides)">
+        <div style="display:flex; flex-direction:column; gap:8px;" x-init="initSortable($el, () => overrides)">
           <template x-for="(item, i) in overrides" :key="item.id || i">
             <div class="tt-card" style="width: 240px;">
               <span class="tt-card-drag">⣿</span>
@@ -342,7 +342,7 @@
           <template x-for="day in ['monday','tuesday','wednesday','thursday','friday']">
             <div class="tt-col">
               <div class="tt-col-header" x-text="day==='monday'?'월요일':day==='tuesday'?'화요일':day==='wednesday'?'수요일':day==='thursday'?'목요일':'금요일'"></div>
-              <div style="display:flex; flex-direction:column; gap:6px; min-height: 100px;" x-init="initSortable($el, timetableDays[day])">
+              <div style="display:flex; flex-direction:column; gap:6px; min-height: 100px;" x-init="initSortable($el, () => timetableDays[day])">
                 <template x-for="(item, i) in timetableDays[day]" :key="item.id">
                   <div class="tt-card">
                     <span class="tt-card-drag">⣿</span>
@@ -361,7 +361,7 @@
     <!-- D-Day -->
     <div class="data-section">
       <div class="data-section-header">🎯 D-Day 이벤트</div>
-      <div class="data-section-body" x-init="initSortable($el, ddayList, {axis: 'y'})">
+      <div class="data-section-body" x-init="initSortable($el, () => ddayList, {axis: 'y'})">
         <template x-for="(item, i) in ddayList" :key="item.id">
           <div class="data-row" style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
             <span class="tt-card-drag">⣿</span>
@@ -655,12 +655,12 @@ document.addEventListener('alpine:init', () => {
     },
 
     // ── Timetable Drag & Drop ──
-    initSortable(el, targetArray) {
+    initSortable(el, getTargetArray, options = {}) {
       let originalNextSibling = null;
       Sortable.create(el, {
         animation: 150,
         handle: '.tt-card-drag',
-        axis: 'y', // Lock dragging to Y-axis only
+        axis: options.axis || 'y', // Lock dragging to Y-axis only
         onStart: (evt) => {
           originalNextSibling = evt.item.nextElementSibling;
         },
@@ -669,8 +669,9 @@ document.addEventListener('alpine:init', () => {
           // Alpine DOM 꼬임 방지를 위해 DOM 원복 후 데이터 배열 스왑
           evt.from.insertBefore(evt.item, originalNextSibling);
           
-          const moved = targetArray.splice(evt.oldIndex, 1)[0];
-          targetArray.splice(evt.newIndex, 0, moved);
+          const arr = getTargetArray();
+          const moved = arr.splice(evt.oldIndex, 1)[0];
+          arr.splice(evt.newIndex, 0, moved);
         }
       });
     },
