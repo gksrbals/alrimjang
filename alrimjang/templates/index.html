@@ -313,6 +313,46 @@
       </div>
     </div>
 
+    <!-- 급식 수동 입력 -->
+    <div class="data-section">
+      <div class="data-section-header" style="display:flex; align-items:center; justify-content:space-between;">
+        <span>🍱 급식 수동 입력</span>
+        <span x-show="mealFromApi" style="font-size:11px; font-weight:400; color:var(--accent); background:var(--accent-glow); border:1px solid rgba(98,158,228,0.3); border-radius:10px; padding:2px 8px;">API 자동 입력됨</span>
+        <span x-show="!mealFromApi" style="font-size:11px; font-weight:400; color:var(--text-muted);">급식 정보 없음 — 직접 입력 가능</span>
+      </div>
+      <div class="data-section-body" style="padding: 14px; gap: 10px;">
+
+        <!-- 칼로리 -->
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="font-size:12px; color:var(--text-dim); white-space:nowrap;">🔥 칼로리</span>
+          <input type="text" class="data-input" style="max-width:160px;" placeholder="예) 871 kcal" x-model="mealCalories">
+        </div>
+
+        <!-- 메뉴 목록 -->
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <template x-for="(item, i) in mealMenus" :key="item.id">
+            <div class="data-row">
+              <span style="font-size:12px; color:var(--text-muted); flex-shrink:0;">•</span>
+              <input type="text" class="data-input" placeholder="메뉴 이름" x-model="item.text">
+              <button class="btn-delete-row" @click="mealMenus.splice(i, 1)" title="삭제">✕</button>
+            </div>
+          </template>
+        </div>
+
+        <!-- 추가 버튼 -->
+        <button class="btn-add" style="margin-top:4px;"
+          @click="mealMenus.push({ id: Math.random().toString(36).substr(2,9), text: '' })">
+          + 메뉴 추가
+        </button>
+
+        <!-- 안내 문구 -->
+        <div style="margin-top:8px; font-size:11px; color:var(--text-muted); line-height:1.6;">
+          <span x-show="mealFromApi">✏️ API에서 가져온 급식 정보입니다. 수정하거나 그대로 저장하세요.</span>
+          <span x-show="!mealFromApi">📝 급식 정보가 없습니다. 직접 입력 후 저장하면 미리보기에 반영됩니다.</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Overrides (Sparse UI) -->
     <div class="data-section">
       <div class="data-section-header">
@@ -437,6 +477,9 @@ document.addEventListener('alpine:init', () => {
     holidayList: [],
     timetableDays: { monday:[], tuesday:[], wednesday:[], thursday:[], friday:[] },
     overrides: [],
+    mealMenus: [],
+    mealCalories: '',
+    mealFromApi: false,
     
     emojiPickerTargetIndex: null,
     previewDebounce: null,
@@ -606,6 +649,18 @@ document.addEventListener('alpine:init', () => {
           this.overrides.sort((a,b) => a.period - b.period);
         }
         
+        // 급식 초기화
+        const meal = this.config.school_meal;
+        if (meal && meal.menus && meal.menus.length > 0) {
+          this.mealMenus = meal.menus.map(text => ({ id: Math.random().toString(36).substr(2,9), text }));
+          this.mealCalories = meal.calories || '';
+          this.mealFromApi = true;
+        } else {
+          this.mealMenus = [];
+          this.mealCalories = '';
+          this.mealFromApi = false;
+        }
+        
         this.showDrawer = true;
       } catch { this.addToast('데이터를 불러올 수 없습니다.', 'error'); }
     },
@@ -638,7 +693,12 @@ document.addEventListener('alpine:init', () => {
         school_start_hour: this.schoolStartHour,
         dday: this.ddayList.filter(d => d.name && d.date),
         school_holidays: this.holidayList.filter(h => h.name && h.date),
-        timetable: ttDict
+        timetable: ttDict,
+        manual_meal: (() => {
+          const menus = this.mealMenus.map(m => m.text.trim()).filter(Boolean);
+          if (menus.length === 0) return null;
+          return { menus, calories: this.mealCalories.trim() };
+        })(),
       };
       
       try {

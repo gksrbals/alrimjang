@@ -193,6 +193,9 @@ def update_data():
     # $schema 보존
     body.setdefault("$schema", "./data.schema.json")
 
+    # manual_meal: data.json에는 저장하지 않고 캐시에만 반영 (세션 한정)
+    manual_meal = body.pop("manual_meal", None)
+
     # 파일 저장
     data_path = Path("data.json")
     with open(data_path, "w", encoding="utf-8") as f:
@@ -227,6 +230,18 @@ def update_data():
         new_school_start_hour = 9
     if next_day != old_next_day:
         _cache["school_meal"] = SchoolMeal.fetch_school_meal(next_dt)
+
+    # manual_meal이 전달된 경우 캐시에 반영 (날짜 재조회 이후에 적용)
+    if manual_meal is not None:
+        menus = [m.strip() for m in (manual_meal.get("menus") or []) if str(m).strip()]
+        if menus:
+            _cache["school_meal"] = SchoolMeal(
+                menus=menus,
+                calories=manual_meal.get("calories", "").strip(),
+            )
+        else:
+            # 메뉴를 모두 비운 경우: 급식 없음으로 처리
+            _cache["school_meal"] = None
 
     # 날짜 또는 등교시간이 바뀌었으면 날씨 재조회
     if next_day != old_next_day or new_school_start_hour != old_school_start_hour:
