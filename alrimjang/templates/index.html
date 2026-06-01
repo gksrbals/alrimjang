@@ -353,6 +353,84 @@
       </div>
     </div>
 
+    <!-- 날씨 수동 Override -->
+    <div class="data-section">
+      <div class="data-section-header" style="display:flex; align-items:center; justify-content:space-between;">
+        <span>☀️ 날씨 수동 설정</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span x-show="weatherFromApi && !weatherOverrideEnabled" style="font-size:11px; font-weight:400; color:var(--accent); background:var(--accent-glow); border:1px solid rgba(98,158,228,0.3); border-radius:10px; padding:2px 8px;">API 자동 입력됨</span>
+          <span x-show="weatherOverrideEnabled" style="font-size:11px; font-weight:400; color:#f59e42; background:rgba(245,158,66,0.12); border:1px solid rgba(245,158,66,0.35); border-radius:10px; padding:2px 8px;">✏️ 수동 설정 중</span>
+          <label class="toggle" title="수동 설정 켜기/끄기">
+            <input type="checkbox" x-model="weatherOverrideEnabled">
+            <span class="toggle-track"></span>
+            <span class="toggle-thumb"></span>
+          </label>
+        </div>
+      </div>
+      <div class="data-section-body" style="padding: 14px; gap: 10px;" x-show="weatherOverrideEnabled">
+
+        <!-- 이모지 + 날씨 설명 -->
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+          <span style="font-size:12px; color:var(--text-dim); white-space:nowrap;">날씨</span>
+          <!-- 이모지 그리드 -->
+          <div style="display:flex; flex-wrap:wrap; gap:4px;">
+            <template x-for="w in WMO_EMOJIS" :key="w.emoji">
+              <button
+                @click="weatherEmoji = w.emoji; weatherDescription = w.label;"
+                :title="w.label"
+                :style="weatherEmoji === w.emoji
+                  ? 'background:var(--accent-glow); border:1px solid var(--accent); border-radius:6px; width:30px; height:30px; font-size:16px; cursor:pointer;'
+                  : 'background:var(--bg-input); border:1px solid var(--border-dim); border-radius:6px; width:30px; height:30px; font-size:16px; cursor:pointer;'"
+                x-text="w.emoji">
+              </button>
+            </template>
+          </div>
+          <input type="text" class="data-input" style="max-width:130px;" placeholder="날씨 설명" x-model="weatherDescription">
+        </div>
+
+        <!-- 기온 -->
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:12px; color:var(--text-dim); white-space:nowrap;">🌡️ 기온</span>
+          <div style="display:flex; align-items:center; gap:4px;">
+            <input type="number" class="data-input" style="width:60px; text-align:center;" placeholder="현재" x-model.number="weatherTemp"> <span style="font-size:11px;color:var(--text-muted);">°C</span>
+          </div>
+          <span style="font-size:12px; color:var(--text-muted);">최고</span>
+          <div style="display:flex; align-items:center; gap:4px;">
+            <input type="number" class="data-input" style="width:60px; text-align:center;" placeholder="최고" x-model.number="weatherMaxTemp"> <span style="font-size:11px;color:var(--text-muted);">°C</span>
+          </div>
+          <span style="font-size:12px; color:var(--text-muted);">최저</span>
+          <div style="display:flex; align-items:center; gap:4px;">
+            <input type="number" class="data-input" style="width:60px; text-align:center;" placeholder="최저" x-model.number="weatherMinTemp"> <span style="font-size:11px;color:var(--text-muted);">°C</span>
+          </div>
+        </div>
+
+        <!-- 강수확률 + 풍속 -->
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:4px;">
+          <span style="font-size:12px; color:var(--text-dim); white-space:nowrap;">🌂 강수확률</span>
+          <div style="display:flex; align-items:center; gap:4px;">
+            <input type="number" class="data-input" style="width:60px; text-align:center;" min="0" max="100" x-model.number="weatherRainProb"> <span style="font-size:11px;color:var(--text-muted);">%</span>
+          </div>
+          <span style="font-size:12px; color:var(--text-muted);">💨 풍속</span>
+          <div style="display:flex; align-items:center; gap:4px;">
+            <input type="number" class="data-input" style="width:60px; text-align:center;" min="0" step="0.1" x-model.number="weatherWindSpeed"> <span style="font-size:11px;color:var(--text-muted);">m/s</span>
+          </div>
+        </div>
+
+        <div style="margin-top:8px; font-size:11px; color:var(--text-muted); line-height:1.6;">
+          ✏️ 저장하면 이번 세션에만 적용됩니다. 서버를 재시작하면 API에서 다시 조회합니다.
+        </div>
+      </div>
+      <!-- 비활성 상태일 때 현재 값 요약 표시 -->
+      <div class="data-section-body" style="padding:10px 14px;" x-show="!weatherOverrideEnabled && weatherFromApi">
+        <span style="font-size:22px;" x-text="weatherEmoji"></span>
+        <span style="font-size:13px; color:var(--text-dim); margin-left:6px;" x-text="weatherDescription"></span>
+        <span style="font-size:13px; color:var(--text-muted); margin-left:8px;" x-text="weatherTemp + '° (최고 ' + weatherMaxTemp + '° / 최저 ' + weatherMinTemp + '°)'"></span>
+      </div>
+      <div class="data-section-body" style="padding:10px 14px;" x-show="!weatherOverrideEnabled && !weatherFromApi">
+        <span style="font-size:12px; color:var(--text-muted);">날씨 정보 없음 — 토글을 켜서 직접 입력하세요.</span>
+      </div>
+    </div>
+
     <!-- Overrides (Sparse UI) -->
     <div class="data-section">
       <div class="data-section-header">
@@ -480,7 +558,25 @@ document.addEventListener('alpine:init', () => {
     mealMenus: [],
     mealCalories: '',
     mealFromApi: false,
-    
+
+    weatherOverrideEnabled: false,
+    weatherEmoji: '☀️',
+    weatherDescription: '맑음',
+    weatherTemp: 0,
+    weatherMaxTemp: 0,
+    weatherMinTemp: 0,
+    weatherRainProb: 0,
+    weatherWindSpeed: 0.0,
+    weatherFromApi: false,
+    showWeatherEmojiPicker: false,
+
+    WMO_EMOJIS: [
+      {emoji:'☀️', label:'맑음'}, {emoji:'🌤️', label:'대체로 맑음'}, {emoji:'⛅', label:'구름 많음'},
+      {emoji:'☁️', label:'흐림'}, {emoji:'🌫️', label:'안개'}, {emoji:'🌦️', label:'이슬비'},
+      {emoji:'🌧️', label:'비'}, {emoji:'🌨️', label:'눈'}, {emoji:'⛈️', label:'뇌우'},
+      {emoji:'🌩️', label:'번개'}, {emoji:'🌬️', label:'바람'}, {emoji:'🌪️', label:'폭풍'},
+    ],
+
     emojiPickerTargetIndex: null,
     previewDebounce: null,
     iframeReady: false,
@@ -661,6 +757,29 @@ document.addEventListener('alpine:init', () => {
           this.mealFromApi = false;
         }
         
+        // 날씨 초기화
+        const weather = this.config.weather;
+        if (weather) {
+          this.weatherEmoji = weather.emoji;
+          this.weatherDescription = weather.description;
+          this.weatherTemp = weather.temp;
+          this.weatherMaxTemp = weather.max_temp;
+          this.weatherMinTemp = weather.min_temp;
+          this.weatherRainProb = weather.rain_prob;
+          this.weatherWindSpeed = weather.wind_speed;
+          this.weatherFromApi = true;
+        } else {
+          this.weatherEmoji = '☀️';
+          this.weatherDescription = '맑음';
+          this.weatherTemp = 0;
+          this.weatherMaxTemp = 0;
+          this.weatherMinTemp = 0;
+          this.weatherRainProb = 0;
+          this.weatherWindSpeed = 0;
+          this.weatherFromApi = false;
+        }
+        this.weatherOverrideEnabled = false;
+        
         this.showDrawer = true;
       } catch { this.addToast('데이터를 불러올 수 없습니다.', 'error'); }
     },
@@ -699,6 +818,15 @@ document.addEventListener('alpine:init', () => {
           if (menus.length === 0) return null;
           return { menus, calories: this.mealCalories.trim() };
         })(),
+        manual_weather: this.weatherOverrideEnabled ? {
+          emoji: this.weatherEmoji,
+          description: this.weatherDescription,
+          temp: this.weatherTemp,
+          max_temp: this.weatherMaxTemp,
+          min_temp: this.weatherMinTemp,
+          rain_prob: this.weatherRainProb,
+          wind_speed: this.weatherWindSpeed,
+        } : null,
       };
       
       try {

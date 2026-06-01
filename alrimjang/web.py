@@ -193,8 +193,9 @@ def update_data():
     # $schema 보존
     body.setdefault("$schema", "./data.schema.json")
 
-    # manual_meal: data.json에는 저장하지 않고 캐시에만 반영 (세션 한정)
+    # manual_meal, manual_weather: data.json에는 저장하지 않고 캐시에만 반영 (세션 한정)
     manual_meal = body.pop("manual_meal", None)
+    manual_weather = body.pop("manual_weather", None)
 
     # 파일 저장
     data_path = Path("data.json")
@@ -243,9 +244,30 @@ def update_data():
             # 메뉴를 모두 비운 경우: 급식 없음으로 처리
             _cache["school_meal"] = None
 
-    # 날짜 또는 등교시간이 바뀌었으면 날씨 재조회
-    if next_day != old_next_day or new_school_start_hour != old_school_start_hour:
+    # 날짜 또는 등교시간이 바뀌었으면 날씨 재조회 (manual_weather가 없을 때만)
+    if manual_weather is None and (next_day != old_next_day or new_school_start_hour != old_school_start_hour):
         _cache["weather"] = Weather.fetch_weather(next_dt, school_hour=new_school_start_hour)
+
+    # manual_weather가 전달된 경우 캐시에 반영 (세션 한정)
+    if manual_weather is not None:
+        if manual_weather.get("clear"):
+            # 비워두면 API 재조회
+            _cache["weather"] = Weather.fetch_weather(next_dt, school_hour=new_school_start_hour)
+        else:
+            try:
+                emoji = manual_weather.get("emoji", "🌡️")
+                description = manual_weather.get("description", "")
+                _cache["weather"] = Weather(
+                    emoji=emoji,
+                    description=description,
+                    temp=int(manual_weather.get("temp", 0)),
+                    max_temp=int(manual_weather.get("max_temp", 0)),
+                    min_temp=int(manual_weather.get("min_temp", 0)),
+                    rain_prob=int(manual_weather.get("rain_prob", 0)),
+                    wind_speed=float(manual_weather.get("wind_speed", 0.0)),
+                )
+            except (TypeError, ValueError):
+                pass
 
     _cache.update(
         {
