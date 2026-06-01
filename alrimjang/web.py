@@ -244,30 +244,29 @@ def update_data():
             # 메뉴를 모두 비운 경우: 급식 없음으로 처리
             _cache["school_meal"] = None
 
-    # 날짜 또는 등교시간이 바뀌었으면 날씨 재조회 (manual_weather가 없을 때만)
-    if manual_weather is None and (next_day != old_next_day or new_school_start_hour != old_school_start_hour):
-        _cache["weather"] = Weather.fetch_weather(next_dt, school_hour=new_school_start_hour)
-
-    # manual_weather가 전달된 경우 캐시에 반영 (세션 한정)
+    # manual_weather 처리
     if manual_weather is not None:
-        if manual_weather.get("clear"):
-            # 비워두면 API 재조회
+        # 수동 값으로 override
+        try:
+            emoji = manual_weather.get("emoji", "🌡️")
+            description = manual_weather.get("description", "")
+            _cache["weather"] = Weather(
+                emoji=emoji,
+                description=description,
+                temp=int(manual_weather.get("temp", 0)),
+                max_temp=int(manual_weather.get("max_temp", 0)),
+                min_temp=int(manual_weather.get("min_temp", 0)),
+                rain_prob=int(manual_weather.get("rain_prob", 0)),
+                wind_speed=float(manual_weather.get("wind_speed", 0.0)),
+            )
+            _cache["weather_overridden"] = True
+        except (TypeError, ValueError):
+            pass
+    else:
+        # override 해제 or 날짜/시간 변경 시 API 재조회
+        if _cache.get("weather_overridden") or next_day != old_next_day or new_school_start_hour != old_school_start_hour:
             _cache["weather"] = Weather.fetch_weather(next_dt, school_hour=new_school_start_hour)
-        else:
-            try:
-                emoji = manual_weather.get("emoji", "🌡️")
-                description = manual_weather.get("description", "")
-                _cache["weather"] = Weather(
-                    emoji=emoji,
-                    description=description,
-                    temp=int(manual_weather.get("temp", 0)),
-                    max_temp=int(manual_weather.get("max_temp", 0)),
-                    min_temp=int(manual_weather.get("min_temp", 0)),
-                    rain_prob=int(manual_weather.get("rain_prob", 0)),
-                    wind_speed=float(manual_weather.get("wind_speed", 0.0)),
-                )
-            except (TypeError, ValueError):
-                pass
+            _cache["weather_overridden"] = False
 
     _cache.update(
         {
