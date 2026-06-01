@@ -778,7 +778,7 @@ document.addEventListener('alpine:init', () => {
           this.weatherWindSpeed = 0;
           this.weatherFromApi = false;
         }
-        this.weatherOverrideEnabled = false;
+        this.weatherOverrideEnabled = !!(weather && weather.overridden);
         
         this.showDrawer = true;
       } catch { this.addToast('데이터를 불러올 수 없습니다.', 'error'); }

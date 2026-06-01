@@ -94,6 +94,7 @@ def get_config():
                 "description": weather.description,
                 "rain_prob": weather.rain_prob,
                 "wind_speed": weather.wind_speed,
+                "overridden": _cache.get("weather_overridden", False),
             }
             if weather
             else None,
